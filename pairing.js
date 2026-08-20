@@ -15,7 +15,8 @@ const {
 
 const {
     createSession,
-    updateSessionStatus
+    updateSessionStatus,
+    getSession
 } = require('./database');
 
 const logger = pino({
@@ -24,23 +25,132 @@ const logger = pino({
 
 const sockets = new Map();
 const pairingCodes = new Map();
+const connections = new Map();
 const reconnecting = new Set();
+const creating = new Map();
 
 async function getVersion() {
     try {
         const result =
             await fetchLatestBaileysVersion();
 
-        if (result?.version) {
+        if (
+            result &&
+            Array.isArray(result.version)
+        ) {
             return result.version;
         }
-    } catch {}
+    } catch (error) {
+        console.error(
+            'Failed to fetch Baileys version:',
+            error.message
+        );
+    }
 
     return [
         2,
         3000,
         1015901307
     ];
+}
+
+function cleanCode(code) {
+    if (!code) {
+        return null;
+    }
+
+    return String(code)
+        .replace(/\s+/g, '')
+        .toUpperCase();
+}
+
+async function waitForSocket(number, timeout = 30000) {
+    const started =
+        Date.now();
+
+    while (
+        Date.now() - started <
+        timeout
+    ) {
+        const socket =
+            sockets.get(number);
+
+        if (socket) {
+            return socket;
+        }
+
+        await new Promise(
+            resolve =>
+                setTimeout(
+                    resolve,
+                    250
+                )
+        );
+    }
+
+    return null;
+}
+
+async function generatePairingCode(
+    phoneNumber,
+    socket,
+    state
+) {
+    if (
+        state.creds.registered
+    ) {
+        return null;
+    }
+
+    const existing =
+        pairingCodes.get(
+            phoneNumber
+        );
+
+    if (existing) {
+        return existing;
+    }
+
+    try {
+        const code =
+            await socket.requestPairingCode(
+                phoneNumber
+            );
+
+        const normalizedCode =
+            cleanCode(code);
+
+        if (normalizedCode) {
+            pairingCodes.set(
+                phoneNumber,
+                normalizedCode
+            );
+
+            updateSessionStatus(
+                phoneNumber,
+                'waiting'
+            );
+
+            console.log(
+                `Pairing code generated for ${phoneNumber}`
+            );
+        }
+
+        return normalizedCode;
+
+    } catch (error) {
+        console.error(
+            'Pairing code generation error:',
+            error.message
+        );
+
+        updateSessionStatus(
+            phoneNumber,
+            'disconnected'
+        );
+
+        throw error;
+    }
 }
 
 async function createPairing(number) {
@@ -53,18 +163,56 @@ async function createPairing(number) {
         );
     }
 
-    createSession(phoneNumber);
+    if (
+        creating.has(phoneNumber)
+    ) {
+        return creating.get(
+            phoneNumber
+        );
+    }
 
-    if (sockets.has(phoneNumber)) {
+    const operation =
+        createPairingInternal(
+            phoneNumber
+        );
+
+    creating.set(
+        phoneNumber,
+        operation
+    );
+
+    try {
+        return await operation;
+    } finally {
+        creating.delete(
+            phoneNumber
+        );
+    }
+}
+
+async function createPairingInternal(
+    phoneNumber
+) {
+    createSession(
+        phoneNumber
+    );
+
+    const existingSocket =
+        sockets.get(
+            phoneNumber
+        );
+
+    if (existingSocket) {
+        const existingCode =
+            pairingCodes.get(
+                phoneNumber
+            ) || null;
+
         return {
             socket:
-                sockets.get(
-                    phoneNumber
-                ),
+                existingSocket,
             code:
-                pairingCodes.get(
-                    phoneNumber
-                ) || null
+                existingCode
         };
     }
 
@@ -116,6 +264,11 @@ async function createPairing(number) {
         socket
     );
 
+    connections.set(
+        phoneNumber,
+        'connecting'
+    );
+
     socket.ev.on(
         'creds.update',
         async () => {
@@ -139,8 +292,30 @@ async function createPairing(number) {
             } = update;
 
             if (
+                connection ===
+                'connecting'
+            ) {
+                connections.set(
+                    phoneNumber,
+                    'connecting'
+                );
+
+                updateSessionStatus(
+                    phoneNumber,
+                    'connecting'
+                );
+
+                return;
+            }
+
+            if (
                 connection === 'open'
             ) {
+                connections.set(
+                    phoneNumber,
+                    'connected'
+                );
+
                 reconnecting.delete(
                     phoneNumber
                 );
@@ -166,6 +341,11 @@ async function createPairing(number) {
             ) {
                 return;
             }
+
+            connections.set(
+                phoneNumber,
+                'disconnected'
+            );
 
             sockets.delete(
                 phoneNumber
@@ -249,54 +429,41 @@ async function createPairing(number) {
     );
 
     if (
-        !state.creds.registered
+        state.creds.registered
     ) {
-        setTimeout(
-            async () => {
-                try {
-                    if (
-                        state.creds.registered
-                    ) {
-                        return;
-                    }
-
-                    const code =
-                        await socket.requestPairingCode(
-                            phoneNumber
-                        );
-
-                    pairingCodes.set(
-                        phoneNumber,
-                        code
-                    );
-
-                    console.log(
-                        `Pairing code generated for ${phoneNumber}`
-                    );
-                } catch (
-                    error
-                ) {
-                    updateSessionStatus(
-                        phoneNumber,
-                        'disconnected'
-                    );
-
-                    console.error(
-                        'Pairing code error:',
-                        error.message
-                    );
-                }
-            },
-            3000
-        );
+        return {
+            socket,
+            code: null
+        };
     }
+
+    await new Promise(
+        resolve =>
+            setTimeout(
+                resolve,
+                1500
+            )
+    );
+
+    if (
+        state.creds.registered
+    ) {
+        return {
+            socket,
+            code: null
+        };
+    }
+
+    const code =
+        await generatePairingCode(
+            phoneNumber,
+            socket,
+            state
+        );
 
     return {
         socket,
-        code:
-            pairingCodes.get(
-                phoneNumber
-            ) || null
+        code
     };
 }
 
@@ -310,7 +477,9 @@ async function getPairingCode(number) {
         );
     }
 
-    createSession(phoneNumber);
+    createSession(
+        phoneNumber
+    );
 
     let socket =
         sockets.get(
@@ -318,23 +487,32 @@ async function getPairingCode(number) {
         );
 
     if (!socket) {
-        await createPairing(
-            phoneNumber
-        );
-
-        socket =
-            sockets.get(
+        const result =
+            await createPairing(
                 phoneNumber
             );
+
+        socket =
+            result.socket;
+
+        if (result.code) {
+            return result.code;
+        }
     }
 
-    let code =
+    const existingCode =
         pairingCodes.get(
             phoneNumber
         );
 
-    if (code) {
-        return code;
+    if (existingCode) {
+        return existingCode;
+    }
+
+    if (!socket) {
+        throw new Error(
+            'Unable to create WhatsApp connection'
+        );
     }
 
     const sessionDir =
@@ -355,15 +533,12 @@ async function getPairingCode(number) {
         return null;
     }
 
-    code =
-        await socket.requestPairingCode(
-            phoneNumber
+    const code =
+        await generatePairingCode(
+            phoneNumber,
+            socket,
+            state
         );
-
-    pairingCodes.set(
-        phoneNumber,
-        code
-    );
 
     return code;
 }
@@ -381,9 +556,93 @@ function getSessions() {
 }
 
 function isConnected(number) {
-    return sockets.has(
-        normalizeNumber(number)
+    const phoneNumber =
+        normalizeNumber(number);
+
+    if (!phoneNumber) {
+        return false;
+    }
+
+    if (
+        connections.get(
+            phoneNumber
+        ) === 'connected'
+    ) {
+        return true;
+    }
+
+    try {
+        const session =
+            getSession(
+                phoneNumber
+            );
+
+        return (
+            session?.status ===
+            'connected'
+        );
+    } catch {
+        return false;
+    }
+}
+
+function getConnectionStatus(number) {
+    const phoneNumber =
+        normalizeNumber(number);
+
+    if (!phoneNumber) {
+        return 'disconnected';
+    }
+
+    return (
+        connections.get(
+            phoneNumber
+        ) ||
+        'disconnected'
     );
+}
+
+function clearPairingCode(number) {
+    const phoneNumber =
+        normalizeNumber(number);
+
+    pairingCodes.delete(
+        phoneNumber
+    );
+}
+
+function closeSocket(number) {
+    const phoneNumber =
+        normalizeNumber(number);
+
+    const socket =
+        sockets.get(
+            phoneNumber
+        );
+
+    if (!socket) {
+        return false;
+    }
+
+    try {
+        socket.end(
+            undefined
+        );
+    } catch {}
+
+    sockets.delete(
+        phoneNumber
+    );
+
+    connections.delete(
+        phoneNumber
+    );
+
+    pairingCodes.delete(
+        phoneNumber
+    );
+
+    return true;
 }
 
 module.exports = {
@@ -391,5 +650,8 @@ module.exports = {
     getPairingCode,
     getSocket,
     getSessions,
-    isConnected
+    isConnected,
+    getConnectionStatus,
+    clearPairingCode,
+    closeSocket
 };
