@@ -77,13 +77,14 @@ button{
 
 .page{
   width:100%;
-  max-width:480px;
+  max-width:1100px;
   flex:1;
+  display:flex;
+  flex-direction:column;
 }
 
 .toolbar{
   width:100%;
-  max-width:1100px;
   display:flex;
   align-items:center;
   justify-content:space-between;
@@ -117,9 +118,8 @@ button{
   position:relative;
   cursor:pointer;
   padding:0;
-  display:flex;
-  align-items:center;
-  transition:.2s ease;
+  display:block;
+  transition:background .2s ease,border-color .2s ease;
 }
 
 .theme-toggle::after{
@@ -146,9 +146,12 @@ button{
   position:absolute;
   z-index:2;
   top:7px;
+  display:block;
   fill:none;
   stroke:var(--muted);
   stroke-width:1.8;
+  stroke-linecap:round;
+  stroke-linejoin:round;
   pointer-events:none;
 }
 
@@ -161,7 +164,7 @@ button{
 }
 
 [data-theme="dark"] .sun-icon{
-  opacity:.5;
+  opacity:.45;
 }
 
 [data-theme="dark"] .moon-icon{
@@ -169,8 +172,10 @@ button{
 }
 
 .header{
+  width:100%;
+  max-width:480px;
+  margin:0 auto 30px;
   text-align:center;
-  margin-bottom:30px;
 }
 
 .header h1{
@@ -189,6 +194,9 @@ button{
 }
 
 .card{
+  width:100%;
+  max-width:480px;
+  margin:0 auto;
   border:1px solid var(--border);
   border-radius:14px;
   background:var(--background);
@@ -338,6 +346,54 @@ button:disabled{
 
 @keyframes spin{
   to{transform:rotate(360deg)}
+}
+
+.footer{
+  width:100%;
+  padding-top:24px;
+  margin-top:70px;
+  border-top:1px solid var(--border);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:14px;
+  text-align:center;
+}
+
+.footer-copy{
+  color:var(--muted);
+  font-size:12px;
+}
+
+.socials{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+}
+
+.social{
+  width:32px;
+  height:32px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:50%;
+  color:var(--muted);
+  transition:background .15s,color .15s;
+}
+
+.social:hover{
+  color:var(--text);
+  background:var(--surface);
+}
+
+.social svg{
+  width:17px;
+  height:17px;
+  display:block;
+  fill:currentColor;
 }
 
 .overlay{
@@ -670,52 +726,6 @@ button:disabled{
   text-decoration:none;
 }
 
-.footer{
-  width:100%;
-  max-width:1100px;
-  margin:70px auto 0;
-  padding-top:24px;
-  border-top:1px solid var(--border);
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:20px;
-}
-
-.footer-copy{
-  color:var(--muted);
-  font-size:12px;
-}
-
-.socials{
-  display:flex;
-  align-items:center;
-  gap:7px;
-}
-
-.social{
-  width:32px;
-  height:32px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  border-radius:50%;
-  color:var(--muted);
-  transition:background .15s,color .15s;
-}
-
-.social:hover{
-  color:var(--text);
-  background:var(--surface);
-}
-
-.social svg{
-  width:17px;
-  height:17px;
-  display:block;
-  fill:currentColor;
-}
-
 @media(max-width:600px){
   body{
     padding:22px 16px;
@@ -737,13 +747,6 @@ button:disabled{
     margin-top:55px;
   }
 }
-
-@media(max-width:420px){
-  .footer{
-    align-items:flex-start;
-    flex-direction:column;
-  }
-}
 </style>
 </head>
 
@@ -752,12 +755,22 @@ button:disabled{
 <div class="page">
 
   <div class="toolbar">
+
     <a class="brand" href="/">
-      <img src="https://raw.githubusercontent.com/InsideADM/InsideADM/main/assets/adm-logo.png" alt="ADM">
+      <img
+        src="https://raw.githubusercontent.com/InsideADM/InsideADM/main/assets/adm-logo.png"
+        alt="ADM"
+      >
       <span>ADM Link Hub</span>
     </a>
 
-    <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+    <button
+      class="theme-toggle"
+      id="themeToggle"
+      aria-label="Toggle theme"
+      type="button"
+    >
+
       <svg class="theme-icon sun-icon" viewBox="0 0 24 24">
         <circle cx="12" cy="12" r="4"></circle>
         <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path>
@@ -766,53 +779,64 @@ button:disabled{
       <svg class="theme-icon moon-icon" viewBox="0 0 24 24">
         <path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11z"></path>
       </svg>
+
     </button>
+
   </div>
 
-  <main>
+  <header class="header">
+    <h1>Pair your device</h1>
+    <p>Link your WhatsApp account securely with ADM Link Hub.</p>
+  </header>
 
-    <header class="header">
-      <h1>Pair your device</h1>
-      <p>Link your WhatsApp account securely with ADM Link Hub.</p>
-    </header>
+  <section class="card">
 
-    <section class="card">
+    <label class="label" for="number">
+      WhatsApp number
+    </label>
 
-      <label class="label" for="number">WhatsApp number</label>
+    <div class="input-wrap">
+      <span class="input-prefix">+</span>
 
-      <div class="input-wrap">
-        <span class="input-prefix">+</span>
-        <input
-          type="tel"
-          id="number"
-          placeholder="256740632497"
-          autocomplete="off"
-          inputmode="numeric"
-        >
-      </div>
+      <input
+        type="tel"
+        id="number"
+        placeholder="256740632497"
+        autocomplete="off"
+        inputmode="numeric"
+      >
+    </div>
 
-      <p class="hint">
-        Enter your number with the country code, without the + sign.
-      </p>
+    <p class="hint">
+      Enter your number with the country code, without the + sign.
+    </p>
 
-      <div class="buttons">
-        <button class="primary" id="pairBtn" onclick="doPair()">
-          Generate code
-        </button>
+    <div class="buttons">
 
-        <button class="secondary" id="qrBtn" onclick="showQR()">
-          Show QR
-        </button>
-      </div>
+      <button
+        class="primary"
+        id="pairBtn"
+        onclick="doPair()"
+      >
+        Generate code
+      </button>
 
-      <div class="status" id="statusBar">
-        <div class="spinner" id="statusSpinner"></div>
-        <span id="statusText"></span>
-      </div>
+      <button
+        class="secondary"
+        id="qrBtn"
+        onclick="showQR()"
+      >
+        Show QR
+      </button>
 
-    </section>
+    </div>
 
-  </main>
+    <div class="status" id="statusBar">
+      <div class="spinner" id="statusSpinner"></div>
+      <span id="statusText"></span>
+    </div>
+
+  </section>
 
   <footer class="footer">
 
@@ -880,7 +904,12 @@ button:disabled{
         </div>
       </div>
 
-      <button class="close" onclick="closeDialog()" aria-label="Close">
+      <button
+        class="close"
+        onclick="closeDialog()"
+        aria-label="Close"
+        type="button"
+      >
         <svg viewBox="0 0 24 24">
           <path d="M6 6l12 12M18 6L6 18"></path>
         </svg>
@@ -931,7 +960,11 @@ button:disabled{
 
         <div class="code-box">
 
-          <button class="copy" onclick="copyCode()">
+          <button
+            class="copy"
+            onclick="copyCode()"
+            type="button"
+          >
             COPY
           </button>
 
@@ -940,7 +973,8 @@ button:disabled{
           </div>
 
           <div class="timer">
-            Code is valid for approximately <span>60 seconds</span>.
+            Code is valid for approximately
+            <span>60 seconds</span>.
           </div>
 
         </div>
@@ -953,7 +987,10 @@ button:disabled{
           QR code
         </div>
 
-        <div class="qr-container" id="qrContainer"></div>
+        <div
+          class="qr-container"
+          id="qrContainer"
+        ></div>
 
         <div class="qr-instruction">
           Open WhatsApp, go to Linked Devices, and scan this QR code.
@@ -995,7 +1032,9 @@ button:disabled{
 
     <div class="success-number">
       <span>✓</span>
-      <span id="success-number-display">+000000000000</span>
+      <span id="success-number-display">
+        +000000000000
+      </span>
     </div>
 
     <div class="success-steps">
@@ -1056,140 +1095,275 @@ let pairingCheckTimer = null;
 const savedTheme = localStorage.getItem('adm-theme');
 
 if (savedTheme === 'dark') {
-  document.documentElement.setAttribute('data-theme', 'dark');
+  document.documentElement.setAttribute(
+    'data-theme',
+    'dark'
+  );
+
+  document
+    .querySelector('meta[name="theme-color"]')
+    .setAttribute('content', '#09090b');
 }
 
-document.getElementById('themeToggle').addEventListener('click', () => {
-  const dark =
-    document.documentElement.getAttribute('data-theme') === 'dark';
+document
+  .getElementById('themeToggle')
+  .addEventListener('click', () => {
 
-  if (dark) {
-    document.documentElement.removeAttribute('data-theme');
-    localStorage.setItem('adm-theme', 'light');
-    document
-      .querySelector('meta[name="theme-color"]')
-      .setAttribute('content', '#ffffff');
-  } else {
-    document.documentElement.setAttribute('data-theme', 'dark');
-    localStorage.setItem('adm-theme', 'dark');
-    document
-      .querySelector('meta[name="theme-color"]')
-      .setAttribute('content', '#09090b');
-  }
-});
+    const dark =
+      document.documentElement.getAttribute(
+        'data-theme'
+      ) === 'dark';
+
+    if (dark) {
+
+      document.documentElement
+        .removeAttribute('data-theme');
+
+      localStorage.setItem(
+        'adm-theme',
+        'light'
+      );
+
+      document
+        .querySelector('meta[name="theme-color"]')
+        .setAttribute(
+          'content',
+          '#ffffff'
+        );
+
+    } else {
+
+      document.documentElement
+        .setAttribute(
+          'data-theme',
+          'dark'
+        );
+
+      localStorage.setItem(
+        'adm-theme',
+        'dark'
+      );
+
+      document
+        .querySelector('meta[name="theme-color"]')
+        .setAttribute(
+          'content',
+          '#09090b'
+        );
+    }
+  });
 
 function setStatus(type, message) {
-  bar.className = 'status ' + type;
-  barTxt.textContent = message;
-  spin.style.display = type === 'loading' ? 'block' : 'none';
+
+  bar.className =
+    'status ' + type;
+
+  barTxt.textContent =
+    message;
+
+  spin.style.display =
+    type === 'loading'
+      ? 'block'
+      : 'none';
 }
 
 function getNumber() {
+
   return document
     .getElementById('number')
     .value
     .trim()
-    .replace(/[^0-9]/g, '');
+    .replace(
+      /[^0-9]/g,
+      ''
+    );
 }
 
 function openDialog(code, isQR) {
-  if (isQR) {
-    dialogTitle.textContent = 'Scan QR code';
-    dialogSub.textContent = 'Use WhatsApp on your phone to scan this code.';
-    dialogSteps.style.display = 'none';
-    codeSection.style.display = 'none';
-    qrSection.style.display = 'block';
-    dialogActionBtn.textContent = 'Close';
 
-    const number = getNumber();
+  if (isQR) {
+
+    dialogTitle.textContent =
+      'Scan QR code';
+
+    dialogSub.textContent =
+      'Use WhatsApp on your phone to scan this code.';
+
+    dialogSteps.style.display =
+      'none';
+
+    codeSection.style.display =
+      'none';
+
+    qrSection.style.display =
+      'block';
+
+    dialogActionBtn.textContent =
+      'Close';
+
+    const number =
+      getNumber();
 
     if (!number) {
       closeDialog();
       return;
     }
 
-    qrContainer.innerHTML = '';
+    qrContainer.innerHTML =
+      '';
 
     const waLink =
       'https://wa.me/' +
       number +
       '?text=Pair%20with%20ADM%20Link%20Hub';
 
-    new QRCode(qrContainer, {
-      text: waLink,
-      width: 220,
-      height: 220,
-      colorDark: '#111827',
-      colorLight: '#ffffff',
-      correctLevel: QRCode.CorrectLevel.H
-    });
+    new QRCode(
+      qrContainer,
+      {
+        text:waLink,
+        width:220,
+        height:220,
+        colorDark:'#111827',
+        colorLight:'#ffffff',
+        correctLevel:
+          QRCode.CorrectLevel.H
+      }
+    );
 
   } else {
-    dialogTitle.textContent = 'Link your device';
-    dialogSub.textContent = 'Follow the steps below in WhatsApp.';
-    dialogSteps.style.display = 'flex';
-    codeSection.style.display = 'block';
-    qrSection.style.display = 'none';
-    dialogActionBtn.textContent = 'Continue';
-    pairCodeEl.textContent = code || '----';
+
+    dialogTitle.textContent =
+      'Link your device';
+
+    dialogSub.textContent =
+      'Follow the steps below in WhatsApp.';
+
+    dialogSteps.style.display =
+      'flex';
+
+    codeSection.style.display =
+      'block';
+
+    qrSection.style.display =
+      'none';
+
+    dialogActionBtn.textContent =
+      'Continue';
+
+    pairCodeEl.textContent =
+      code || '----';
   }
 
-  overlay.classList.add('open');
-  document.body.style.overflow = 'hidden';
+  overlay.classList.add(
+    'open'
+  );
+
+  document.body.style.overflow =
+    'hidden';
 }
 
 function closeDialog() {
-  overlay.classList.remove('open');
-  document.body.style.overflow = '';
+
+  overlay.classList.remove(
+    'open'
+  );
+
+  document.body.style.overflow =
+    '';
 }
 
 function copyCode() {
-  const code = pairCodeEl.textContent.trim();
 
-  if (!code || code === '----') {
+  const code =
+    pairCodeEl.textContent.trim();
+
+  if (
+    !code ||
+    code === '----'
+  ) {
     return;
   }
 
-  navigator.clipboard.writeText(code).then(() => {
-    const copyButton = document.querySelector('.copy');
-    const original = copyButton.textContent;
+  navigator.clipboard
+    .writeText(code)
+    .then(() => {
 
-    copyButton.textContent = 'COPIED';
+      const copyButton =
+        document.querySelector(
+          '.copy'
+        );
 
-    setTimeout(() => {
-      copyButton.textContent = original;
-    }, 1800);
-  });
+      const original =
+        copyButton.textContent;
+
+      copyButton.textContent =
+        'COPIED';
+
+      setTimeout(() => {
+        copyButton.textContent =
+          original;
+      },1800);
+
+    });
 }
 
-overlay.addEventListener('click', event => {
-  if (event.target === overlay) {
-    closeDialog();
-  }
-});
+overlay.addEventListener(
+  'click',
+  event => {
 
-document.getElementById('number').addEventListener('keydown', event => {
-  if (event.key === 'Enter') {
-    doPair();
+    if (
+      event.target === overlay
+    ) {
+      closeDialog();
+    }
+
   }
-});
+);
+
+document
+  .getElementById('number')
+  .addEventListener(
+    'keydown',
+    event => {
+
+      if (
+        event.key === 'Enter'
+      ) {
+        doPair();
+      }
+
+    }
+  );
 
 async function doPair() {
-  const number = getNumber();
 
-  if (!number || number.length < 10) {
+  const number =
+    getNumber();
+
+  if (
+    !number ||
+    number.length < 10
+  ) {
+
     setStatus(
       'error',
       'Enter a valid WhatsApp number with country code.'
     );
+
     return;
   }
 
-  pairingNumber = number;
+  pairingNumber =
+    number;
 
-  btn.disabled = true;
-  qrBtn.disabled = true;
-  btn.textContent = 'Generating...';
+  btn.disabled =
+    true;
+
+  qrBtn.disabled =
+    true;
+
+  btn.textContent =
+    'Generating...';
 
   setStatus(
     'loading',
@@ -1197,109 +1371,172 @@ async function doPair() {
   );
 
   try {
-    const response = await fetch(
-      '/pair?code=' + encodeURIComponent(number),
-      {
-        method: 'GET',
-        cache: 'no-store'
-      }
-    );
+
+    const response =
+      await fetch(
+        '/pair?code=' +
+        encodeURIComponent(number),
+        {
+          method:'GET',
+          cache:'no-store'
+        }
+      );
 
     if (!response.ok) {
-      throw new Error('Request failed');
+      throw new Error(
+        'Request failed'
+      );
     }
 
-    const data = await response.json();
+    const data =
+      await response.json();
 
-    if (data.success && data.code) {
-      currentCode = data.code;
-      pairCodeEl.textContent = data.code;
+    if (
+      data.success &&
+      data.code
+    ) {
+
+      currentCode =
+        data.code;
+
+      pairCodeEl.textContent =
+        data.code;
 
       setStatus(
         'success',
         'Pairing code generated.'
       );
 
-      btn.textContent = 'Code generated';
+      btn.textContent =
+        'Code generated';
 
-      openDialog(data.code, false);
+      openDialog(
+        data.code,
+        false
+      );
 
-      startPairingDetection(number);
+      startPairingDetection(
+        number
+      );
+
     } else {
+
       throw new Error(
-        data.message || 'Failed to generate code'
+        data.message ||
+        'Failed to generate code'
       );
     }
 
   } catch (error) {
+
     setStatus(
       'error',
-      error.message === 'Failed to generate code'
+      error.message ===
+      'Failed to generate code'
         ? error.message
         : 'Unable to connect to the pairing server.'
     );
 
   } finally {
+
     setTimeout(() => {
-      btn.disabled = false;
-      qrBtn.disabled = false;
-      btn.textContent = 'Generate code';
-    }, 2500);
+
+      btn.disabled =
+        false;
+
+      qrBtn.disabled =
+        false;
+
+      btn.textContent =
+        'Generate code';
+
+    },2500);
   }
 }
 
 async function startPairingDetection(number) {
+
   if (pairingCheckTimer) {
-    clearInterval(pairingCheckTimer);
+
+    clearInterval(
+      pairingCheckTimer
+    );
   }
 
-  const startedAt = Date.now();
+  const startedAt =
+    Date.now();
 
-  pairingCheckTimer = setInterval(async () => {
+  pairingCheckTimer =
+    setInterval(
+      async () => {
 
-    if (Date.now() - startedAt > 120000) {
-      clearInterval(pairingCheckTimer);
-      pairingCheckTimer = null;
-      return;
-    }
+        if (
+          Date.now() -
+          startedAt >
+          120000
+        ) {
 
-    try {
-      const response = await fetch(
-        '/pair/status?number=' + encodeURIComponent(number),
-        {
-          method: 'GET',
-          cache: 'no-store'
+          clearInterval(
+            pairingCheckTimer
+          );
+
+          pairingCheckTimer =
+            null;
+
+          return;
         }
-      );
 
-      if (!response.ok) {
-        return;
-      }
+        try {
 
-      const data = await response.json();
+          const response =
+            await fetch(
+              '/pair/status?number=' +
+              encodeURIComponent(number),
+              {
+                method:'GET',
+                cache:'no-store'
+              }
+            );
 
-      if (
-        data.success === true &&
-        (
-          data.connected === true ||
-          data.paired === true ||
-          data.status === 'connected' ||
-          data.status === 'paired'
-        )
-      ) {
-        clearInterval(pairingCheckTimer);
-        pairingCheckTimer = null;
+          if (!response.ok) {
+            return;
+          }
 
-        showSuccess(number);
-      }
+          const data =
+            await response.json();
 
-    } catch (error) {
-    }
+          if (
+            data.success === true &&
+            (
+              data.connected === true ||
+              data.paired === true ||
+              data.status === 'connected' ||
+              data.status === 'paired'
+            )
+          ) {
 
-  }, 2000);
+            clearInterval(
+              pairingCheckTimer
+            );
+
+            pairingCheckTimer =
+              null;
+
+            showSuccess(
+              number
+            );
+          }
+
+        } catch (error) {
+        }
+
+      },
+      2000
+    );
 }
 
 function showSuccess(number) {
+
   closeDialog();
 
   setStatus(
@@ -1309,25 +1546,40 @@ function showSuccess(number) {
 
   document.getElementById(
     'success-number-display'
-  ).textContent = '+' + number;
+  ).textContent =
+    '+' + number;
 
   document
-    .getElementById('success-screen')
-    .classList.add('show');
+    .getElementById(
+      'success-screen'
+    )
+    .classList.add(
+      'show'
+    );
 }
 
 function showQR() {
-  const number = getNumber();
 
-  if (!number || number.length < 10) {
+  const number =
+    getNumber();
+
+  if (
+    !number ||
+    number.length < 10
+  ) {
+
     setStatus(
       'error',
       'Enter a valid WhatsApp number with country code.'
     );
+
     return;
   }
 
-  openDialog(null, true);
+  openDialog(
+    null,
+    true
+  );
 }
 </script>
 
