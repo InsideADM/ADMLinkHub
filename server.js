@@ -50,7 +50,13 @@ function authenticate(req, res, next) {
     }
 
     next();
-});
+}
+
+app.use(
+    express.static(
+        path.join(__dirname, 'public')
+    )
+);
 
 app.get('/', (req, res) => {
     res.json({
@@ -68,7 +74,11 @@ app.get('/health', (req, res) => {
 
 app.get('/pair.html', (req, res) => {
     res.sendFile(
-        path.join(__dirname, 'pair.html')
+        path.join(
+            __dirname,
+            'public',
+            'pair.html'
+        )
     );
 });
 
