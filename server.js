@@ -25,21 +25,7 @@ const limiter = rateLimit({
     legacyHeaders: false
 });
 
-const pairingLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 20,
-    standardHeaders: true,
-    legacyHeaders: false,
-    message: {
-        success: false,
-        error: 'Too many pairing requests. Please try again later.'
-    }
-});
-
-const publicDir = path.join(
-    process.cwd(),
-    'public'
-);
+app.use(limiter);
 
 const sessionsDir = path.resolve(
     process.cwd(),
@@ -54,14 +40,12 @@ if (!fs.existsSync(sessionsDir)) {
 
 function authenticate(req, res, next) {
     if (!config.apiKey) {
-        return res.status(500).json({
-            error: 'API key is not configured'
-        });
+        return next();
     }
 
     const key = req.headers['x-api-key'];
 
-    if (!key || key !== config.apiKey) {
+    if (key !== config.apiKey) {
         return res.status(401).json({
             error: 'Unauthorized'
         });
@@ -69,6 +53,10 @@ function authenticate(req, res, next) {
 
     next();
 }
+
+app.use(express.static(
+    path.join(process.cwd(), 'public')
+));
 
 app.get('/', (req, res) => {
     res.json({
@@ -84,22 +72,95 @@ app.get('/health', (req, res) => {
     });
 });
 
-app.use(
-    express.static(publicDir)
-);
+app.get('/pair', async (req, res) => {
+    try {
+        const number = String(
+            req.query.code || ''
+        ).replace(/\D/g, '');
 
-app.get('/pair', (req, res) => {
-    res.sendFile(
-        path.join(
-            publicDir,
-            'pair.html'
-        )
-    );
+        if (!number || number.length < 10) {
+            return res.status(400).json({
+                success: false,
+                message:
+                    'Valid phone number is required'
+            });
+        }
+
+        const result =
+            await createPairing(number);
+
+        let code = result.code || null;
+
+        if (!code) {
+            code =
+                await getPairingCode(number);
+        }
+
+        if (!code) {
+            return res.status(400).json({
+                success: false,
+                message:
+                    'Pairing code is not available'
+            });
+        }
+
+        res.json({
+            success: true,
+            number,
+            code
+        });
+
+    } catch (error) {
+        console.error(
+            'Pairing request failed:',
+            error.message
+        );
+
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+});
+
+app.get('/pair/status', (req, res) => {
+    try {
+        const number = String(
+            req.query.number || ''
+        ).replace(/\D/g, '');
+
+        if (!number) {
+            return res.status(400).json({
+                success: false,
+                message:
+                    'Phone number is required'
+            });
+        }
+
+        const connected =
+            isConnected(number);
+
+        res.json({
+            success: true,
+            number,
+            connected,
+            paired: connected,
+            status:
+                connected
+                    ? 'connected'
+                    : 'waiting'
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
 });
 
 app.get(
     '/api/sessions',
-    limiter,
     authenticate,
     (req, res) => {
         res.json({
@@ -110,7 +171,7 @@ app.get(
 
 app.post(
     '/api/pair',
-    pairingLimiter,
+    authenticate,
     async (req, res) => {
         try {
             const {
@@ -120,7 +181,8 @@ app.post(
             if (!number) {
                 return res.status(400).json({
                     success: false,
-                    error: 'Phone number is required'
+                    error:
+                        'Phone number is required'
                 });
             }
 
@@ -129,14 +191,16 @@ app.post(
 
             res.json({
                 success: true,
-                number: String(number)
-                    .replace(/\D/g, ''),
-                code: result.code || null
+                number:
+                    String(number)
+                        .replace(/\D/g, ''),
+                code:
+                    result.code || null
             });
 
         } catch (error) {
             console.error(
-                'Pairing request failed:',
+                'API pairing request failed:',
                 error.message
             );
 
@@ -150,26 +214,20 @@ app.post(
 
 app.get(
     '/api/pair/:number',
-    pairingLimiter,
+    authenticate,
     async (req, res) => {
         try {
-            const number =
-                String(req.params.number)
-                    .replace(/\D/g, '');
-
-            if (!number) {
-                return res.status(400).json({
-                    success: false,
-                    error: 'Invalid phone number'
-                });
-            }
-
             const code =
-                await getPairingCode(number);
+                await getPairingCode(
+                    req.params.number
+                );
 
             res.json({
                 success: true,
-                number,
+                number:
+                    String(
+                        req.params.number
+                    ).replace(/\D/g, ''),
                 code
             });
 
@@ -184,36 +242,6 @@ app.get(
                 error: error.message
             });
         }
-    }
-);
-
-app.get(
-    '/api/pair/status',
-    pairingLimiter,
-    (req, res) => {
-        const number =
-            String(req.query.number || '')
-                .replace(/\D/g, '');
-
-        if (!number) {
-            return res.status(400).json({
-                success: false,
-                error: 'Phone number is required'
-            });
-        }
-
-        const connected =
-            isConnected(number);
-
-        res.json({
-            success: true,
-            number,
-            connected,
-            paired: connected,
-            status: connected
-                ? 'connected'
-                : 'waiting'
-        });
     }
 );
 
