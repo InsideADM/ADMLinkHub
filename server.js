@@ -50,7 +50,7 @@ function authenticate(req, res, next) {
     }
 
     next();
-}
+});
 
 app.get('/', (req, res) => {
     res.json({
@@ -64,6 +64,12 @@ app.get('/health', (req, res) => {
     res.json({
         status: 'ok'
     });
+});
+
+app.get('/pair.html', (req, res) => {
+    res.sendFile(
+        path.join(__dirname, 'pair.html')
+    );
 });
 
 app.get(
@@ -100,6 +106,7 @@ app.post(
                     .replace(/\D/g, ''),
                 code: result.code || null
             });
+
         } catch (error) {
             console.error(
                 'Pairing request failed:',
@@ -131,6 +138,7 @@ app.get(
                 ).replace(/\D/g, ''),
                 code
             });
+
         } catch (error) {
             console.error(
                 'Pairing code request failed:',
