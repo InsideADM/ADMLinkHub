@@ -20,6 +20,7 @@ const logger = pino({
 const sockets = new Map();
 const pairingCodes = new Map();
 const reconnecting = new Set();
+const pairingRequests = new Map();
 
 async function getVersion() {
     try {
@@ -49,15 +50,17 @@ async function createPairing(number) {
     }
 
     if (sockets.has(phoneNumber)) {
+        const existingCode =
+            pairingCodes.get(
+                phoneNumber
+            ) || null;
+
         return {
             socket:
                 sockets.get(
                     phoneNumber
                 ),
-            code:
-                pairingCodes.get(
-                    phoneNumber
-                ) || null
+            code: existingCode
         };
     }
 
@@ -137,6 +140,10 @@ async function createPairing(number) {
                     phoneNumber
                 );
 
+                pairingRequests.delete(
+                    phoneNumber
+                );
+
                 console.log(
                     `WhatsApp connected: ${phoneNumber}`
                 );
@@ -155,6 +162,10 @@ async function createPairing(number) {
             );
 
             pairingCodes.delete(
+                phoneNumber
+            );
+
+            pairingRequests.delete(
                 phoneNumber
             );
 
@@ -219,47 +230,64 @@ async function createPairing(number) {
     if (
         !state.creds.registered
     ) {
-        setTimeout(
-            async () => {
-                try {
-                    if (
-                        state.creds.registered
-                    ) {
-                        return;
-                    }
+        const pairingPromise =
+            (async () => {
+                await new Promise(
+                    resolve =>
+                        setTimeout(
+                            resolve,
+                            3000
+                        )
+                );
 
-                    const code =
-                        await socket.requestPairingCode(
-                            phoneNumber
-                        );
-
-                    pairingCodes.set(
-                        phoneNumber,
-                        code
-                    );
-
-                    console.log(
-                        `Pairing code generated for ${phoneNumber}`
-                    );
-                } catch (
-                    error
+                if (
+                    state.creds.registered
                 ) {
-                    console.error(
-                        'Pairing code error:',
-                        error.message
-                    );
+                    return null;
                 }
-            },
-            3000
+
+                const code =
+                    await socket.requestPairingCode(
+                        phoneNumber
+                    );
+
+                pairingCodes.set(
+                    phoneNumber,
+                    code
+                );
+
+                console.log(
+                    `Pairing code generated for ${phoneNumber}`
+                );
+
+                return code;
+            })();
+
+        pairingRequests.set(
+            phoneNumber,
+            pairingPromise
         );
+
+        try {
+            const code =
+                await pairingPromise;
+
+            return {
+                socket,
+                code
+            };
+        } catch (error) {
+            pairingRequests.delete(
+                phoneNumber
+            );
+
+            throw error;
+        }
     }
 
     return {
         socket,
-        code:
-            pairingCodes.get(
-                phoneNumber
-            ) || null
+        code: null
     };
 }
 
@@ -279,23 +307,38 @@ async function getPairingCode(number) {
         );
 
     if (!socket) {
-        await createPairing(
-            phoneNumber
-        );
-
-        socket =
-            sockets.get(
+        const result =
+            await createPairing(
                 phoneNumber
             );
+
+        socket =
+            result.socket;
+
+        if (result.code) {
+            return result.code;
+        }
     }
 
-    let code =
+    const existingCode =
         pairingCodes.get(
             phoneNumber
         );
 
-    if (code) {
-        return code;
+    if (existingCode) {
+        return existingCode;
+    }
+
+    const pending =
+        pairingRequests.get(
+            phoneNumber
+        );
+
+    if (pending) {
+        const code =
+            await pending;
+
+        return code || null;
     }
 
     const sessionDir =
@@ -316,7 +359,7 @@ async function getPairingCode(number) {
         return null;
     }
 
-    code =
+    const code =
         await socket.requestPairingCode(
             phoneNumber
         );
