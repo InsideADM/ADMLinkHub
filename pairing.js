@@ -4,166 +4,81 @@ const {
 } = require('./socket');
 
 const {
-    ensureSessionDir,
-    normalizeNumber
-} = require('./session-store');
-
-const {
     createSession,
     updateSessionStatus
 } = require('./database');
 
+const {
+    normalizeNumber
+} = require('./session-store');
+
 const pairingCodes = new Map();
 const pairingPromises = new Map();
 
+function wait(ms) {
+    return new Promise(resolve => {
+        setTimeout(resolve, ms);
+    });
+}
+
 async function createPairing(number) {
-    const phoneNumber =
-        normalizeNumber(number);
+    const phoneNumber = normalizeNumber(number);
 
     if (!phoneNumber) {
-        throw new Error(
-            'Invalid phone number'
-        );
+        throw new Error('Invalid phone number');
     }
 
     createSession(phoneNumber);
 
-    const existingSocket =
-        sessions[phoneNumber];
+    const existingCode = pairingCodes.get(phoneNumber);
 
-    if (existingSocket) {
-        const existingCode =
-            pairingCodes.get(
-                phoneNumber
-            );
-
-        if (existingCode) {
-            return {
-                socket: existingSocket,
-                code: existingCode
-            };
-        }
-
+    if (existingCode) {
         return {
-            socket: existingSocket,
-            code: null
+            socket: sessions.get(phoneNumber) || null,
+            code: existingCode
         };
     }
 
-    updateSessionStatus(
-        phoneNumber,
-        'connecting'
-    );
+    const existingPromise =
+        pairingPromises.get(phoneNumber);
 
-    const promise =
-        new Promise(
-            async (resolve, reject) => {
-                let resolved = false;
+    if (existingPromise) {
+        const code = await existingPromise;
 
-                const finish = (
-                    code,
-                    error
-                ) => {
-                    if (resolved) {
-                        return;
-                    }
+        return {
+            socket: sessions.get(phoneNumber) || null,
+            code
+        };
+    }
 
-                    resolved = true;
+    let socket = sessions.get(phoneNumber);
 
-                    if (error) {
-                        reject(error);
-                        return;
-                    }
+    if (!socket) {
+        updateSessionStatus(
+            phoneNumber,
+            'connecting'
+        );
 
-                    if (code) {
-                        pairingCodes.set(
-                            phoneNumber,
-                            code
-                        );
-                    }
-
-                    resolve(code || null);
-                };
-
-                try {
-                    const socket =
-                        await createSocket(
-                            phoneNumber,
-                            (
-                                code,
-                                error
-                            ) => {
-                                finish(
-                                    code,
-                                    error
-                                );
-                            }
-                        );
-
-                    if (
-                        socket &&
-                        socket.user
-                    ) {
-                        updateSessionStatus(
-                            phoneNumber,
-                            'connected'
-                        );
-
-                        finish(null);
-                    } else {
-                        setTimeout(
-                            () => {
-                                if (
-                                    !resolved
-                                ) {
-                                    const current =
-                                        sessions[
-                                            phoneNumber
-                                        ];
-
-                                    if (
-                                        current
-                                            ?.user
-                                    ) {
-                                        updateSessionStatus(
-                                            phoneNumber,
-                                            'connected'
-                                        );
-
-                                        finish(
-                                            null
-                                        );
-                                    }
-                                }
-                            },
-                            1000
-                        );
-                    }
-
-                    setTimeout(
-                        () => {
-                            if (
-                                !resolved
-                            ) {
-                                finish(
-                                    null
-                                );
-                            }
-                        },
-                        15000
-                    );
-                } catch (error) {
-                    updateSessionStatus(
+        socket = await createSocket(
+            phoneNumber,
+            async code => {
+                if (code) {
+                    pairingCodes.set(
                         phoneNumber,
-                        'disconnected'
+                        code
                     );
 
-                    finish(
-                        null,
-                        error
+                    console.log(
+                        `Pairing code generated for ${phoneNumber}: ${code}`
                     );
                 }
             }
+        );
+    }
+
+    const promise =
+        waitForPairingCode(
+            phoneNumber
         );
 
     pairingPromises.set(
@@ -172,21 +87,60 @@ async function createPairing(number) {
     );
 
     try {
-        const code =
-            await promise;
+        const code = await promise;
 
         return {
             socket:
-                sessions[
+                sessions.get(
                     phoneNumber
-                ] || null,
-            code
+                ) || socket,
+            code: code || null
         };
     } finally {
         pairingPromises.delete(
             phoneNumber
         );
     }
+}
+
+async function waitForPairingCode(
+    phoneNumber
+) {
+    const timeout = 30000;
+    const interval = 500;
+    const started = Date.now();
+
+    while (
+        Date.now() - started <
+        timeout
+    ) {
+        const code =
+            pairingCodes.get(
+                phoneNumber
+            );
+
+        if (code) {
+            return code;
+        }
+
+        const session =
+            sessions.get(
+                phoneNumber
+            );
+
+        if (
+            session &&
+            session.user
+        ) {
+            return null;
+        }
+
+        await wait(interval);
+    }
+
+    throw new Error(
+        'Pairing code is not available'
+    );
 }
 
 async function getPairingCode(number) {
@@ -219,12 +173,37 @@ async function getPairingCode(number) {
         return await existingPromise;
     }
 
-    const result =
-        await createPairing(
+    const socket =
+        sessions.get(
             phoneNumber
         );
 
-    return result.code || null;
+    if (!socket) {
+        const result =
+            await createPairing(
+                phoneNumber
+            );
+
+        return result.code || null;
+    }
+
+    const promise =
+        waitForPairingCode(
+            phoneNumber
+        );
+
+    pairingPromises.set(
+        phoneNumber,
+        promise
+    );
+
+    try {
+        return await promise;
+    } finally {
+        pairingPromises.delete(
+            phoneNumber
+        );
+    }
 }
 
 function getSocket(number) {
@@ -232,28 +211,52 @@ function getSocket(number) {
         normalizeNumber(number);
 
     return (
-        sessions[
+        sessions.get(
             phoneNumber
-        ] || null
+        ) || null
     );
 }
 
 function getSessions() {
-    return Object.keys(
-        sessions
-    ).filter(
-        number =>
-            sessions[number]
+    return Array.from(
+        sessions.keys()
     );
 }
 
 function isConnected(number) {
-    const socket =
-        getSocket(number);
+    const phoneNumber =
+        normalizeNumber(number);
 
-    return !!(
-        socket &&
-        socket.user
+    const socket =
+        sessions.get(
+            phoneNumber
+        );
+
+    if (!socket) {
+        return false;
+    }
+
+    return !!socket.user;
+}
+
+function setPairingCode(
+    number,
+    code
+) {
+    const phoneNumber =
+        normalizeNumber(number);
+
+    if (!phoneNumber || !code) {
+        return;
+    }
+
+    pairingCodes.set(
+        phoneNumber,
+        code
+    );
+
+    console.log(
+        `Pairing code stored for ${phoneNumber}: ${code}`
     );
 }
 
@@ -264,6 +267,10 @@ function clearPairingCode(number) {
     pairingCodes.delete(
         phoneNumber
     );
+
+    pairingPromises.delete(
+        phoneNumber
+    );
 }
 
 module.exports = {
@@ -272,5 +279,6 @@ module.exports = {
     getSocket,
     getSessions,
     isConnected,
+    setPairingCode,
     clearPairingCode
 };
