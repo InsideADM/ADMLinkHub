@@ -4,10 +4,12 @@ const path = require('path');
 const fs = require('fs');
 
 const config = require('./config');
+
 const {
     createPairing,
     getPairingCode,
-    getSessions
+    getSessions,
+    isConnected
 } = require('./pairing');
 
 const app = express();
@@ -23,7 +25,21 @@ const limiter = rateLimit({
     legacyHeaders: false
 });
 
-app.use(limiter);
+const pairingLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 20,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: {
+        success: false,
+        error: 'Too many pairing requests. Please try again later.'
+    }
+});
+
+const publicDir = path.join(
+    process.cwd(),
+    'public'
+);
 
 const sessionsDir = path.resolve(
     process.cwd(),
@@ -38,12 +54,14 @@ if (!fs.existsSync(sessionsDir)) {
 
 function authenticate(req, res, next) {
     if (!config.apiKey) {
-        return next();
+        return res.status(500).json({
+            error: 'API key is not configured'
+        });
     }
 
     const key = req.headers['x-api-key'];
 
-    if (key !== config.apiKey) {
+    if (!key || key !== config.apiKey) {
         return res.status(401).json({
             error: 'Unauthorized'
         });
@@ -51,12 +69,6 @@ function authenticate(req, res, next) {
 
     next();
 }
-
-app.use(
-    express.static(
-        path.join(__dirname, 'public')
-    )
-);
 
 app.get('/', (req, res) => {
     res.json({
@@ -72,11 +84,14 @@ app.get('/health', (req, res) => {
     });
 });
 
-app.get('/pair.html', (req, res) => {
+app.use(
+    express.static(publicDir)
+);
+
+app.get('/pair', (req, res) => {
     res.sendFile(
         path.join(
-            __dirname,
-            'public',
+            publicDir,
             'pair.html'
         )
     );
@@ -84,6 +99,7 @@ app.get('/pair.html', (req, res) => {
 
 app.get(
     '/api/sessions',
+    limiter,
     authenticate,
     (req, res) => {
         res.json({
@@ -94,7 +110,7 @@ app.get(
 
 app.post(
     '/api/pair',
-    authenticate,
+    pairingLimiter,
     async (req, res) => {
         try {
             const {
@@ -103,6 +119,7 @@ app.post(
 
             if (!number) {
                 return res.status(400).json({
+                    success: false,
                     error: 'Phone number is required'
                 });
             }
@@ -133,19 +150,26 @@ app.post(
 
 app.get(
     '/api/pair/:number',
-    authenticate,
+    pairingLimiter,
     async (req, res) => {
         try {
+            const number =
+                String(req.params.number)
+                    .replace(/\D/g, '');
+
+            if (!number) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Invalid phone number'
+                });
+            }
+
             const code =
-                await getPairingCode(
-                    req.params.number
-                );
+                await getPairingCode(number);
 
             res.json({
                 success: true,
-                number: String(
-                    req.params.number
-                ).replace(/\D/g, ''),
+                number,
                 code
             });
 
@@ -160,6 +184,36 @@ app.get(
                 error: error.message
             });
         }
+    }
+);
+
+app.get(
+    '/api/pair/status',
+    pairingLimiter,
+    (req, res) => {
+        const number =
+            String(req.query.number || '')
+                .replace(/\D/g, '');
+
+        if (!number) {
+            return res.status(400).json({
+                success: false,
+                error: 'Phone number is required'
+            });
+        }
+
+        const connected =
+            isConnected(number);
+
+        res.json({
+            success: true,
+            number,
+            connected,
+            paired: connected,
+            status: connected
+                ? 'connected'
+                : 'waiting'
+        });
     }
 );
 
