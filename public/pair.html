@@ -4,49 +4,41 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#ffffff">
-<title>Pair — ADM Link Hub</title>
+<title>Pair Device — ADM Link Hub</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,500,1,0" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 
 <style>
 :root{
-  --bg:#fff;
-  --surface:#fff;
-  --surface-2:#f7f7f8;
-  --text:#18181b;
-  --muted:#71717a;
-  --muted-2:#a1a1aa;
-  --border:#e4e4e7;
-  --border-hover:#d4d4d8;
-  --primary:#18181b;
-  --primary-hover:#27272a;
+  --blue:#2563eb;
+  --blue-hover:#1d4ed8;
+  --blue-soft:#eff6ff;
+  --blue-border:#dbeafe;
+  --text:#111827;
+  --muted:#6b7280;
+  --border:#e5e7eb;
+  --surface:#f9fafb;
+  --background:#fff;
   --success:#16a34a;
   --danger:#dc2626;
-  --blue:#2563eb;
-  --blue-soft:#eff6ff;
-  --shadow:0 12px 40px rgba(0,0,0,.06);
 }
 
-html[data-theme="dark"]{
-  --bg:#09090b;
-  --surface:#09090b;
-  --surface-2:#18181b;
-  --text:#fafafa;
-  --muted:#a1a1aa;
-  --muted-2:#71717a;
-  --border:#27272a;
-  --border-hover:#3f3f46;
-  --primary:#fafafa;
-  --primary-hover:#e4e4e7;
-  --success:#4ade80;
-  --danger:#f87171;
-  --blue:#60a5fa;
+[data-theme="dark"]{
+  --blue:#3b82f6;
+  --blue-hover:#60a5fa;
   --blue-soft:#172554;
-  --shadow:0 18px 50px rgba(0,0,0,.28);
+  --blue-border:#1e3a8a;
+  --text:#f9fafb;
+  --muted:#9ca3af;
+  --border:#27272a;
+  --surface:#18181b;
+  --background:#09090b;
+  --success:#22c55e;
+  --danger:#ef4444;
 }
 
 *{
@@ -57,130 +49,123 @@ html[data-theme="dark"]{
 
 html{
   min-height:100%;
-  background:var(--bg);
-  color-scheme:light;
-  transition:background .2s ease;
-}
-
-html[data-theme="dark"]{
-  color-scheme:dark;
+  background:var(--background);
 }
 
 body{
   min-height:100vh;
   font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
   color:var(--text);
-  background:var(--bg);
+  background:var(--background);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:28px 20px;
   -webkit-font-smoothing:antialiased;
-  overflow-x:hidden;
-  touch-action:pan-y;
-  transition:background .2s ease,color .2s ease;
+  overscroll-behavior:none;
 }
 
 button,
-input{
-  font:inherit;
-}
-
-button{
+input,
+a{
   -webkit-tap-highlight-color:transparent;
 }
 
-.material-symbols-rounded{
-  font-family:"Material Symbols Rounded";
-  font-weight:500;
-  font-style:normal;
-  font-size:20px;
-  line-height:1;
-  letter-spacing:normal;
-  text-transform:none;
-  display:inline-block;
-  white-space:nowrap;
-  word-wrap:normal;
-  direction:ltr;
-  -webkit-font-feature-settings:"liga";
-  -webkit-font-smoothing:antialiased;
-  font-variation-settings:"FILL" 1,"wght" 500,"GRAD" 0,"opsz" 24;
-}
-
-.nav{
-  width:100%;
-  height:64px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:0 28px;
-  border-bottom:1px solid var(--border);
-  background:var(--bg);
-  transition:background .2s ease,border-color .2s ease;
-}
-
-.nav-brand{
-  display:flex;
-  align-items:center;
-  gap:9px;
-  text-decoration:none;
-  color:var(--text);
-  font-size:14px;
-  font-weight:600;
-  letter-spacing:-.25px;
-}
-
-.nav-logo{
-  width:28px;
-  height:28px;
-  border-radius:50%;
-  object-fit:cover;
-  display:block;
-}
-
-.nav-right{
-  display:flex;
-  align-items:center;
-  gap:8px;
-}
-
-.theme-toggle{
-  width:48px;
-  height:28px;
-  padding:2px;
-  border:1px solid var(--border);
-  border-radius:999px;
-  background:var(--surface-2);
-  cursor:pointer;
-  display:flex;
-  align-items:center;
-  justify-content:flex-start;
-  transition:background .2s ease,border-color .2s ease;
-}
-
-.theme-toggle.dark{
-  justify-content:flex-end;
-}
-
-.theme-knob{
-  width:22px;
-  height:22px;
-  border-radius:50%;
-  background:var(--surface);
-  border:1px solid var(--border);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  color:var(--text);
-  box-shadow:0 1px 3px rgba(0,0,0,.12);
-  transition:transform .2s ease,background .2s ease,color .2s ease;
-}
-
-.theme-knob .material-symbols-rounded{
-  font-size:15px;
+button{
+  font-family:inherit;
 }
 
 .page{
   width:100%;
-  max-width:440px;
-  margin:0 auto;
-  padding:76px 20px 34px;
+  max-width:480px;
+  flex:1;
+}
+
+.toolbar{
+  width:100%;
+  max-width:1100px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin:0 auto 70px;
+}
+
+.brand{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  color:var(--text);
+  text-decoration:none;
+  font-size:15px;
+  font-weight:600;
+  letter-spacing:-.25px;
+}
+
+.brand img{
+  width:31px;
+  height:31px;
+  border-radius:50%;
+  object-fit:cover;
+}
+
+.theme-toggle{
+  width:54px;
+  height:30px;
+  border:1px solid var(--border);
+  border-radius:999px;
+  background:var(--surface);
+  position:relative;
+  cursor:pointer;
+  padding:0;
+  display:flex;
+  align-items:center;
+  transition:.2s ease;
+}
+
+.theme-toggle::after{
+  content:"";
+  width:24px;
+  height:24px;
+  border-radius:50%;
+  background:var(--background);
+  border:1px solid var(--border);
+  position:absolute;
+  top:2px;
+  left:3px;
+  transition:transform .2s ease;
+  box-shadow:0 1px 3px rgba(0,0,0,.15);
+}
+
+[data-theme="dark"] .theme-toggle::after{
+  transform:translateX(23px);
+}
+
+.theme-icon{
+  width:14px;
+  height:14px;
+  position:absolute;
+  z-index:2;
+  top:7px;
+  fill:none;
+  stroke:var(--muted);
+  stroke-width:1.8;
+  pointer-events:none;
+}
+
+.sun-icon{
+  left:8px;
+}
+
+.moon-icon{
+  right:8px;
+}
+
+[data-theme="dark"] .sun-icon{
+  opacity:.5;
+}
+
+[data-theme="dark"] .moon-icon{
+  opacity:1;
 }
 
 .header{
@@ -189,34 +174,33 @@ button{
 }
 
 .header h1{
-  font-size:30px;
+  font-size:32px;
   line-height:1.15;
   font-weight:600;
-  letter-spacing:-1px;
+  letter-spacing:-1.1px;
 }
 
 .header p{
-  max-width:360px;
-  margin:10px auto 0;
+  margin:11px auto 0;
+  max-width:390px;
   color:var(--muted);
   font-size:14px;
-  line-height:1.55;
+  line-height:1.6;
 }
 
 .card{
   border:1px solid var(--border);
   border-radius:14px;
-  background:var(--surface);
-  padding:22px;
-  box-shadow:var(--shadow);
+  background:var(--background);
+  padding:24px;
+  box-shadow:0 4px 25px rgba(0,0,0,.035);
 }
 
 .label{
   display:block;
-  margin-bottom:8px;
-  color:var(--text);
   font-size:13px;
   font-weight:500;
+  margin-bottom:8px;
 }
 
 .input-wrap{
@@ -228,128 +212,124 @@ button{
   left:14px;
   top:50%;
   transform:translateY(-50%);
-  color:var(--muted-2);
-  font-size:14px;
+  color:var(--muted);
+  font-size:15px;
   pointer-events:none;
 }
 
 input{
   width:100%;
   height:48px;
-  padding:0 14px 0 29px;
-  border:1px solid var(--border-hover);
+  border:1px solid var(--border);
   border-radius:9px;
-  outline:none;
-  background:var(--surface);
+  background:var(--background);
   color:var(--text);
+  padding:0 14px 0 30px;
+  font-family:inherit;
   font-size:14px;
-  transition:border-color .15s ease,box-shadow .15s ease,background .2s ease;
+  outline:none;
+  transition:border-color .15s,box-shadow .15s;
 }
 
 input::placeholder{
-  color:var(--muted-2);
-}
-
-input:hover{
-  border-color:var(--muted);
+  color:var(--muted);
+  opacity:.7;
 }
 
 input:focus{
-  border-color:var(--text);
-  box-shadow:0 0 0 3px rgba(127,127,127,.12);
+  border-color:var(--blue);
+  box-shadow:0 0 0 3px rgba(37,99,235,.1);
 }
 
 .hint{
   margin-top:8px;
-  color:var(--muted-2);
-  font-size:11px;
-  line-height:1.5;
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.45;
 }
 
 .buttons{
   display:grid;
   grid-template-columns:1fr 1fr;
-  gap:9px;
+  gap:10px;
   margin-top:20px;
 }
 
 button{
-  border:0;
-}
-
-.action{
-  height:45px;
+  height:46px;
   border-radius:9px;
-  cursor:pointer;
-  font-size:13px;
+  font-size:14px;
   font-weight:500;
-  transition:background .15s ease,border-color .15s ease,transform .1s ease,opacity .15s ease;
+  cursor:pointer;
+  transition:background .15s,border-color .15s,transform .1s;
 }
 
-.action:active{
+button:active{
   transform:scale(.98);
 }
 
 .primary{
-  background:var(--primary);
-  color:var(--bg);
+  border:1px solid var(--blue);
+  background:var(--blue);
+  color:#fff;
 }
 
 .primary:hover{
-  background:var(--primary-hover);
+  background:var(--blue-hover);
+  border-color:var(--blue-hover);
 }
 
 .secondary{
   border:1px solid var(--border);
-  background:var(--surface);
+  background:var(--background);
   color:var(--text);
 }
 
 .secondary:hover{
-  background:var(--surface-2);
-  border-color:var(--border-hover);
+  background:var(--surface);
 }
 
-.action:disabled{
+button:disabled{
   cursor:not-allowed;
-  opacity:.55;
+  opacity:.6;
 }
 
 .status{
   display:none;
-  align-items:center;
-  gap:8px;
-  margin-top:13px;
-  padding:10px 12px;
-  border-radius:8px;
-  font-size:12px;
+  margin-top:14px;
+  border-radius:9px;
+  padding:11px 13px;
+  font-size:13px;
   line-height:1.4;
 }
 
 .status.loading{
   display:flex;
+  align-items:center;
+  gap:9px;
   color:var(--blue);
   background:var(--blue-soft);
+  border:1px solid var(--blue-border);
 }
 
 .status.success{
   display:block;
   color:var(--success);
   background:rgba(34,197,94,.08);
-  border:1px solid rgba(34,197,94,.15);
+  border:1px solid rgba(34,197,94,.18);
 }
 
 .status.error{
   display:block;
   color:var(--danger);
   background:rgba(239,68,68,.08);
-  border:1px solid rgba(239,68,68,.15);
+  border:1px solid rgba(239,68,68,.18);
 }
 
 .spinner{
-  width:13px;
-  height:13px;
-  border:2px solid rgba(96,165,250,.3);
+  width:14px;
+  height:14px;
+  border:2px solid var(--blue-border);
   border-top-color:var(--blue);
   border-radius:50%;
   animation:spin .7s linear infinite;
@@ -360,59 +340,6 @@ button{
   to{transform:rotate(360deg)}
 }
 
-.footer{
-  margin-top:34px;
-  text-align:center;
-}
-
-.footer-line{
-  width:100%;
-  height:1px;
-  background:var(--border);
-  margin-bottom:20px;
-}
-
-.footer-copy{
-  color:var(--muted-2);
-  font-size:11px;
-}
-
-.socials{
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  gap:7px;
-  margin-top:15px;
-}
-
-.social{
-  width:34px;
-  height:34px;
-  border:1px solid var(--border);
-  border-radius:50%;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  color:var(--muted);
-  background:var(--surface);
-  text-decoration:none;
-  transition:background .15s ease,color .15s ease,border-color .15s ease,transform .1s ease;
-}
-
-.social:hover{
-  color:var(--text);
-  background:var(--surface-2);
-  border-color:var(--border-hover);
-}
-
-.social:active{
-  transform:scale(.94);
-}
-
-.social .material-symbols-rounded{
-  font-size:17px;
-}
-
 .overlay{
   position:fixed;
   inset:0;
@@ -421,13 +348,8 @@ button{
   align-items:center;
   justify-content:center;
   padding:20px;
-  background:rgba(255,255,255,.82);
-  backdrop-filter:blur(12px);
-  -webkit-backdrop-filter:blur(12px);
-}
-
-html[data-theme="dark"] .overlay{
-  background:rgba(9,9,11,.82);
+  background:rgba(0,0,0,.35);
+  backdrop-filter:blur(8px);
 }
 
 .overlay.open{
@@ -436,54 +358,38 @@ html[data-theme="dark"] .overlay{
 
 .dialog{
   width:100%;
-  max-width:390px;
-  max-height:calc(100vh - 40px);
-  overflow-y:auto;
+  max-width:400px;
+  background:var(--background);
   border:1px solid var(--border);
   border-radius:14px;
-  background:var(--surface);
-  box-shadow:0 24px 70px rgba(0,0,0,.15);
-  animation:dialogIn .16s ease-out;
-}
-
-@keyframes dialogIn{
-  from{
-    opacity:0;
-    transform:translateY(7px) scale(.985);
-  }
-  to{
-    opacity:1;
-    transform:translateY(0) scale(1);
-  }
+  box-shadow:0 20px 60px rgba(0,0,0,.2);
+  overflow:hidden;
 }
 
 .dialog-header{
-  min-height:68px;
-  padding:17px 18px;
+  padding:20px 22px;
   border-bottom:1px solid var(--border);
   display:flex;
   align-items:flex-start;
   justify-content:space-between;
-  gap:12px;
+  gap:16px;
 }
 
 .dialog-title{
-  font-size:15px;
+  font-size:16px;
   font-weight:600;
-  letter-spacing:-.2px;
 }
 
 .dialog-subtitle{
   margin-top:5px;
+  font-size:12px;
   color:var(--muted);
-  font-size:11px;
   line-height:1.45;
 }
 
 .close{
   width:30px;
   height:30px;
-  margin-top:-2px;
   border:0;
   background:transparent;
   color:var(--muted);
@@ -491,55 +397,60 @@ html[data-theme="dark"] .overlay{
   display:flex;
   align-items:center;
   justify-content:center;
-  cursor:pointer;
   flex-shrink:0;
+  padding:0;
 }
 
 .close:hover{
-  background:var(--surface-2);
+  background:var(--surface);
   color:var(--text);
 }
 
-.close .material-symbols-rounded{
-  font-size:20px;
+.close svg{
+  width:18px;
+  height:18px;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:2;
+  stroke-linecap:round;
 }
 
 .dialog-body{
-  padding:20px 18px;
+  padding:22px;
 }
 
 .steps{
   display:flex;
   flex-direction:column;
-  gap:16px;
-  margin-bottom:20px;
+  gap:18px;
+  margin-bottom:22px;
 }
 
 .step{
   display:flex;
   align-items:flex-start;
-  gap:11px;
+  gap:12px;
 }
 
 .step-number{
-  width:25px;
-  height:25px;
-  flex-shrink:0;
+  width:26px;
+  height:26px;
   border-radius:50%;
-  background:var(--surface-2);
-  border:1px solid var(--border);
-  color:var(--text);
+  background:var(--blue-soft);
+  color:var(--blue);
+  border:1px solid var(--blue-border);
   display:flex;
   align-items:center;
   justify-content:center;
-  font-size:10px;
+  font-size:12px;
   font-weight:600;
+  flex-shrink:0;
 }
 
 .step-text{
   padding-top:3px;
   color:var(--muted);
-  font-size:12px;
+  font-size:13px;
   line-height:1.5;
 }
 
@@ -549,56 +460,50 @@ html[data-theme="dark"] .overlay{
 }
 
 .code-label{
-  margin-bottom:8px;
+  font-size:11px;
   color:var(--muted);
-  font-size:10px;
-  font-weight:600;
+  font-weight:500;
+  margin-bottom:8px;
   text-transform:uppercase;
-  letter-spacing:.06em;
+  letter-spacing:.05em;
 }
 
 .code-box{
   position:relative;
-  border:1px solid var(--border);
-  border-radius:10px;
-  background:var(--surface-2);
-  padding:20px 12px 14px;
+  border:1px solid var(--blue-border);
+  background:var(--blue-soft);
+  border-radius:11px;
+  padding:20px 12px 15px;
   text-align:center;
 }
 
 .code{
-  color:var(--text);
-  font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
-  font-size:26px;
+  font-size:27px;
   line-height:1;
   font-weight:600;
   letter-spacing:5px;
+  color:var(--blue);
+  font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
 }
 
 .copy{
   position:absolute;
-  top:8px;
-  right:8px;
-  height:27px;
+  right:9px;
+  top:9px;
+  height:28px;
   padding:0 8px;
-  border:1px solid var(--border);
   border-radius:6px;
-  background:var(--surface);
-  color:var(--muted);
-  font-size:9px;
+  border:1px solid var(--blue-border);
+  background:var(--background);
+  color:var(--blue);
+  font-size:10px;
   font-weight:600;
-  cursor:pointer;
-}
-
-.copy:hover{
-  color:var(--text);
-  background:var(--surface-2);
 }
 
 .timer{
-  margin-top:9px;
-  color:var(--muted-2);
-  font-size:10px;
+  margin-top:10px;
+  color:var(--muted);
+  font-size:11px;
 }
 
 .timer span{
@@ -611,9 +516,9 @@ html[data-theme="dark"] .overlay{
 
 .qr-container{
   display:flex;
-  justify-content:center;
   align-items:center;
-  padding:6px;
+  justify-content:center;
+  padding:10px;
 }
 
 .qr-container canvas,
@@ -621,22 +526,22 @@ html[data-theme="dark"] .overlay{
   display:block;
   width:220px!important;
   height:220px!important;
-  padding:9px;
+  padding:10px;
   background:#fff;
   border:1px solid var(--border);
   border-radius:10px;
 }
 
 .qr-instruction{
-  margin-top:6px;
   text-align:center;
   color:var(--muted);
-  font-size:11px;
+  font-size:12px;
   line-height:1.5;
+  margin-top:5px;
 }
 
 .dialog-footer{
-  padding:0 18px 18px;
+  padding:0 22px 22px;
 }
 
 .dialog-action{
@@ -647,11 +552,11 @@ html[data-theme="dark"] .overlay{
   position:fixed;
   inset:0;
   z-index:2000;
+  background:var(--background);
   display:none;
   align-items:center;
   justify-content:center;
   padding:24px;
-  background:var(--bg);
 }
 
 .success-screen.show{
@@ -660,100 +565,93 @@ html[data-theme="dark"] .overlay{
 
 .success-card{
   width:100%;
-  max-width:420px;
+  max-width:430px;
   text-align:center;
 }
 
 .success-icon{
-  width:54px;
-  height:54px;
-  margin:0 auto 19px;
-  border:1px solid rgba(34,197,94,.2);
+  width:56px;
+  height:56px;
+  margin:0 auto 20px;
   border-radius:50%;
-  background:rgba(34,197,94,.08);
+  background:rgba(34,197,94,.1);
+  border:1px solid rgba(34,197,94,.2);
   color:var(--success);
   display:flex;
   align-items:center;
   justify-content:center;
-}
-
-.success-icon .material-symbols-rounded{
   font-size:25px;
 }
 
 .success-title{
-  font-size:27px;
+  font-size:28px;
   line-height:1.2;
   font-weight:600;
-  letter-spacing:-.8px;
+  letter-spacing:-.7px;
 }
 
 .success-sub{
+  margin:10px auto 22px;
   max-width:340px;
-  margin:9px auto 20px;
   color:var(--muted);
-  font-size:13px;
+  font-size:14px;
   line-height:1.6;
 }
 
 .success-number{
   display:inline-flex;
   align-items:center;
-  gap:7px;
-  margin-bottom:22px;
-  padding:8px 12px;
-  border:1px solid rgba(34,197,94,.16);
+  gap:8px;
+  padding:8px 13px;
+  border:1px solid rgba(34,197,94,.2);
+  background:rgba(34,197,94,.08);
   border-radius:8px;
-  background:rgba(34,197,94,.07);
   color:var(--success);
+  font-size:13px;
   font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
-  font-size:12px;
-}
-
-.success-number .material-symbols-rounded{
-  font-size:15px;
+  margin-bottom:24px;
 }
 
 .success-steps{
-  margin-bottom:20px;
-  overflow:hidden;
-  border:1px solid var(--border);
-  border-radius:11px;
-  background:var(--surface);
   text-align:left;
+  border:1px solid var(--border);
+  border-radius:12px;
+  overflow:hidden;
+  background:var(--background);
+  margin-bottom:22px;
 }
 
 .success-step{
   display:flex;
   align-items:flex-start;
-  gap:11px;
-  padding:14px;
+  gap:12px;
+  padding:15px;
   border-bottom:1px solid var(--border);
 }
 
 .success-step:last-child{
-  border-bottom:0;
+  border-bottom:none;
 }
 
 .ss-num{
-  width:24px;
-  height:24px;
-  flex-shrink:0;
+  width:25px;
+  height:25px;
   border-radius:50%;
-  background:var(--surface-2);
-  border:1px solid var(--border);
-  color:var(--text);
+  background:var(--blue-soft);
+  color:var(--blue);
+  border:1px solid var(--blue-border);
   display:flex;
   align-items:center;
   justify-content:center;
-  font-size:10px;
+  font-size:11px;
   font-weight:600;
+  flex-shrink:0;
 }
 
 .ss-text{
   padding-top:2px;
   color:var(--muted);
-  font-size:11px;
+  font-size:12px;
   line-height:1.5;
 }
 
@@ -763,37 +661,87 @@ html[data-theme="dark"] .overlay{
 }
 
 .success-pair-again{
+  font-size:13px;
+  color:var(--muted);
+}
+
+.success-pair-again a{
+  color:var(--blue);
+  text-decoration:none;
+}
+
+.footer{
+  width:100%;
+  max-width:1100px;
+  margin:70px auto 0;
+  padding-top:24px;
+  border-top:1px solid var(--border);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:20px;
+}
+
+.footer-copy{
   color:var(--muted);
   font-size:12px;
 }
 
-.success-pair-again a{
+.socials{
+  display:flex;
+  align-items:center;
+  gap:7px;
+}
+
+.social{
+  width:32px;
+  height:32px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:50%;
+  color:var(--muted);
+  transition:background .15s,color .15s;
+}
+
+.social:hover{
   color:var(--text);
-  text-decoration:underline;
-  text-underline-offset:3px;
+  background:var(--surface);
 }
 
-@media(max-width:520px){
-  .nav{
-    padding:0 17px;
-  }
-
-  .page{
-    padding-top:58px;
-  }
+.social svg{
+  width:17px;
+  height:17px;
+  display:block;
+  fill:currentColor;
 }
 
-@media(max-width:460px){
+@media(max-width:600px){
+  body{
+    padding:22px 16px;
+  }
+
+  .toolbar{
+    margin-bottom:55px;
+  }
+
+  .header h1{
+    font-size:28px;
+  }
+
   .buttons{
     grid-template-columns:1fr;
   }
 
-  .card{
-    padding:20px;
+  .footer{
+    margin-top:55px;
   }
+}
 
-  .header h1{
-    font-size:27px;
+@media(max-width:420px){
+  .footer{
+    align-items:flex-start;
+    flex-direction:column;
   }
 }
 </style>
@@ -801,68 +749,72 @@ html[data-theme="dark"] .overlay{
 
 <body>
 
-<nav class="nav">
-  <a class="nav-brand" href="/">
-    <img class="nav-logo" src="https://raw.githubusercontent.com/InsideADM/InsideADM/main/assets/adm-logo.png" alt="ADM">
-    <span>ADM Link Hub</span>
-  </a>
+<div class="page">
 
-  <div class="nav-right">
-    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle theme">
-      <span class="theme-knob">
-        <span class="material-symbols-rounded" id="themeIcon">light_mode</span>
-      </span>
+  <div class="toolbar">
+    <a class="brand" href="/">
+      <img src="https://raw.githubusercontent.com/InsideADM/InsideADM/main/assets/adm-logo.png" alt="ADM">
+      <span>ADM Link Hub</span>
+    </a>
+
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+      <svg class="theme-icon sun-icon" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="4"></circle>
+        <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path>
+      </svg>
+
+      <svg class="theme-icon moon-icon" viewBox="0 0 24 24">
+        <path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11z"></path>
+      </svg>
     </button>
   </div>
-</nav>
 
-<main class="page">
+  <main>
 
-  <header class="header">
-    <h1>Pair your device</h1>
-    <p>Link your WhatsApp account securely with ADM Link Hub.</p>
-  </header>
+    <header class="header">
+      <h1>Pair your device</h1>
+      <p>Link your WhatsApp account securely with ADM Link Hub.</p>
+    </header>
 
-  <section class="card">
+    <section class="card">
 
-    <label class="label" for="number">WhatsApp number</label>
+      <label class="label" for="number">WhatsApp number</label>
 
-    <div class="input-wrap">
-      <span class="input-prefix">+</span>
+      <div class="input-wrap">
+        <span class="input-prefix">+</span>
+        <input
+          type="tel"
+          id="number"
+          placeholder="256740632497"
+          autocomplete="off"
+          inputmode="numeric"
+        >
+      </div>
 
-      <input
-        type="tel"
-        id="number"
-        placeholder="256740632497"
-        autocomplete="off"
-        inputmode="numeric"
-      >
-    </div>
+      <p class="hint">
+        Enter your number with the country code, without the + sign.
+      </p>
 
-    <p class="hint">
-      Enter your number with the country code, without the + sign.
-    </p>
+      <div class="buttons">
+        <button class="primary" id="pairBtn" onclick="doPair()">
+          Generate code
+        </button>
 
-    <div class="buttons">
-      <button class="action primary" id="pairBtn" onclick="doPair()">
-        Generate code
-      </button>
+        <button class="secondary" id="qrBtn" onclick="showQR()">
+          Show QR
+        </button>
+      </div>
 
-      <button class="action secondary" id="qrBtn" onclick="showQR()">
-        Scan QR
-      </button>
-    </div>
+      <div class="status" id="statusBar">
+        <div class="spinner" id="statusSpinner"></div>
+        <span id="statusText"></span>
+      </div>
 
-    <div class="status" id="statusBar">
-      <div class="spinner" id="statusSpinner"></div>
-      <span id="statusText"></span>
-    </div>
+    </section>
 
-  </section>
+  </main>
 
   <footer class="footer">
-
-    <div class="footer-line"></div>
 
     <div class="footer-copy">
       © 2026 ADM Link Hub
@@ -877,7 +829,9 @@ html[data-theme="dark"] .overlay{
         rel="noopener noreferrer"
         aria-label="Telegram"
       >
-        <span class="material-symbols-rounded">send</span>
+        <svg viewBox="0 0 24 24">
+          <path d="M21.4 3.3 18.2 20c-.2 1.2-.9 1.5-1.8.9l-5-3.7-2.4 2.3c-.3.3-.5.5-1 .5l.4-5.1 9.3-8.4c.4-.4-.1-.6-.6-.2L5.6 13.8.7 12.3c-1.1-.3-1.1-1.1.2-1.6L20 3.1c.9-.3 1.7.2 1.4.2z"></path>
+        </svg>
       </a>
 
       <a
@@ -887,7 +841,9 @@ html[data-theme="dark"] .overlay{
         rel="noopener noreferrer"
         aria-label="YouTube"
       >
-        <span class="material-symbols-rounded">smart_display</span>
+        <svg viewBox="0 0 24 24">
+          <path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8zM9.6 15.8V8.2l6.3 3.8-6.3 3.8z"></path>
+        </svg>
       </a>
 
       <a
@@ -897,14 +853,16 @@ html[data-theme="dark"] .overlay{
         rel="noopener noreferrer"
         aria-label="Facebook"
       >
-        <span class="material-symbols-rounded">public</span>
+        <svg viewBox="0 0 24 24">
+          <path d="M24 12a12 12 0 1 0-13.9 11.9v-8.4H7.1V12h3V9.4c0-3 1.8-4.7 4.5-4.7 1.3 0 2.7.2 2.7.2v3h-1.5c-1.5 0-2 .9-2 1.9V12h3.4l-.5 3.5h-2.9v8.4A12 12 0 0 0 24 12z"></path>
+        </svg>
       </a>
 
     </div>
 
   </footer>
 
-</main>
+</div>
 
 <div class="overlay" id="overlay">
 
@@ -923,7 +881,9 @@ html[data-theme="dark"] .overlay{
       </div>
 
       <button class="close" onclick="closeDialog()" aria-label="Close">
-        <span class="material-symbols-rounded">close</span>
+        <svg viewBox="0 0 24 24">
+          <path d="M6 6l12 12M18 6L6 18"></path>
+        </svg>
       </button>
 
     </div>
@@ -996,7 +956,7 @@ html[data-theme="dark"] .overlay{
         <div class="qr-container" id="qrContainer"></div>
 
         <div class="qr-instruction">
-          Scan this code using WhatsApp on your phone.
+          Open WhatsApp, go to Linked Devices, and scan this QR code.
         </div>
 
       </div>
@@ -1006,7 +966,7 @@ html[data-theme="dark"] .overlay{
     <div class="dialog-footer">
 
       <button
-        class="action primary dialog-action"
+        class="primary dialog-action"
         id="dialogActionBtn"
         onclick="closeDialog()"
       >
@@ -1023,9 +983,7 @@ html[data-theme="dark"] .overlay{
 
   <div class="success-card">
 
-    <div class="success-icon">
-      <span class="material-symbols-rounded">check</span>
-    </div>
+    <div class="success-icon">✓</div>
 
     <h2 class="success-title">
       Device connected
@@ -1036,7 +994,7 @@ html[data-theme="dark"] .overlay{
     </p>
 
     <div class="success-number">
-      <span class="material-symbols-rounded">check_circle</span>
+      <span>✓</span>
       <span id="success-number-display">+000000000000</span>
     </div>
 
@@ -1091,49 +1049,39 @@ const qrContainer = document.getElementById('qrContainer');
 const pairCodeEl = document.getElementById('pairCode');
 const dialogActionBtn = document.getElementById('dialogActionBtn');
 
-const themeToggle = document.getElementById('themeToggle');
-const themeIcon = document.getElementById('themeIcon');
-
 let currentCode = null;
 let pairingNumber = null;
 let pairingCheckTimer = null;
 
-function setTheme(theme) {
-  document.documentElement.dataset.theme = theme;
-
-  const dark = theme === 'dark';
-
-  themeToggle.classList.toggle('dark', dark);
-  themeIcon.textContent = dark ? 'dark_mode' : 'light_mode';
-
-  localStorage.setItem('adm-theme', theme);
-}
-
 const savedTheme = localStorage.getItem('adm-theme');
 
-if (savedTheme === 'dark' || savedTheme === 'light') {
-  setTheme(savedTheme);
-} else {
-  setTheme(
-    window.matchMedia &&
-    window.matchMedia('(prefers-color-scheme: dark)').matches
-      ? 'dark'
-      : 'light'
-  );
+if (savedTheme === 'dark') {
+  document.documentElement.setAttribute('data-theme', 'dark');
 }
 
-themeToggle.addEventListener('click', function() {
-  const current =
-    document.documentElement.dataset.theme;
+document.getElementById('themeToggle').addEventListener('click', () => {
+  const dark =
+    document.documentElement.getAttribute('data-theme') === 'dark';
 
-  setTheme(current === 'dark' ? 'light' : 'dark');
+  if (dark) {
+    document.documentElement.removeAttribute('data-theme');
+    localStorage.setItem('adm-theme', 'light');
+    document
+      .querySelector('meta[name="theme-color"]')
+      .setAttribute('content', '#ffffff');
+  } else {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    localStorage.setItem('adm-theme', 'dark');
+    document
+      .querySelector('meta[name="theme-color"]')
+      .setAttribute('content', '#09090b');
+  }
 });
 
 function setStatus(type, message) {
   bar.className = 'status ' + type;
   barTxt.textContent = message;
-  spin.style.display =
-    type === 'loading' ? 'block' : 'none';
+  spin.style.display = type === 'loading' ? 'block' : 'none';
 }
 
 function getNumber() {
@@ -1147,9 +1095,7 @@ function getNumber() {
 function openDialog(code, isQR) {
   if (isQR) {
     dialogTitle.textContent = 'Scan QR code';
-    dialogSub.textContent =
-      'Use WhatsApp on your phone to scan this code.';
-
+    dialogSub.textContent = 'Use WhatsApp on your phone to scan this code.';
     dialogSteps.style.display = 'none';
     codeSection.style.display = 'none';
     qrSection.style.display = 'block';
@@ -1180,16 +1126,12 @@ function openDialog(code, isQR) {
 
   } else {
     dialogTitle.textContent = 'Link your device';
-    dialogSub.textContent =
-      'Follow the steps below in WhatsApp.';
-
+    dialogSub.textContent = 'Follow the steps below in WhatsApp.';
     dialogSteps.style.display = 'flex';
     codeSection.style.display = 'block';
     qrSection.style.display = 'none';
     dialogActionBtn.textContent = 'Continue';
-
-    pairCodeEl.textContent =
-      code || '----';
+    pairCodeEl.textContent = code || '----';
   }
 
   overlay.classList.add('open');
@@ -1202,42 +1144,35 @@ function closeDialog() {
 }
 
 function copyCode() {
-  const code =
-    pairCodeEl.textContent.trim();
+  const code = pairCodeEl.textContent.trim();
 
   if (!code || code === '----') {
     return;
   }
 
-  navigator.clipboard.writeText(code)
-    .then(() => {
-      const copyButton =
-        document.querySelector('.copy');
+  navigator.clipboard.writeText(code).then(() => {
+    const copyButton = document.querySelector('.copy');
+    const original = copyButton.textContent;
 
-      const original =
-        copyButton.textContent;
+    copyButton.textContent = 'COPIED';
 
-      copyButton.textContent = 'COPIED';
-
-      setTimeout(() => {
-        copyButton.textContent = original;
-      }, 1800);
-    });
+    setTimeout(() => {
+      copyButton.textContent = original;
+    }, 1800);
+  });
 }
 
-overlay.addEventListener('click', function(event) {
+overlay.addEventListener('click', event => {
   if (event.target === overlay) {
     closeDialog();
   }
 });
 
-document
-  .getElementById('number')
-  .addEventListener('keydown', function(event) {
-    if (event.key === 'Enter') {
-      doPair();
-    }
-  });
+document.getElementById('number').addEventListener('keydown', event => {
+  if (event.key === 'Enter') {
+    doPair();
+  }
+});
 
 async function doPair() {
   const number = getNumber();
@@ -1263,8 +1198,7 @@ async function doPair() {
 
   try {
     const response = await fetch(
-      '/pair?code=' +
-      encodeURIComponent(number),
+      '/pair?code=' + encodeURIComponent(number),
       {
         method: 'GET',
         cache: 'no-store'
@@ -1275,56 +1209,42 @@ async function doPair() {
       throw new Error('Request failed');
     }
 
-    const data =
-      await response.json();
+    const data = await response.json();
 
     if (data.success && data.code) {
-
       currentCode = data.code;
-
-      pairCodeEl.textContent =
-        data.code;
+      pairCodeEl.textContent = data.code;
 
       setStatus(
         'success',
         'Pairing code generated.'
       );
 
-      btn.textContent =
-        'Code generated';
+      btn.textContent = 'Code generated';
 
-      openDialog(
-        data.code,
-        false
-      );
+      openDialog(data.code, false);
 
       startPairingDetection(number);
-
     } else {
       throw new Error(
-        data.message ||
-        'Failed to generate code'
+        data.message || 'Failed to generate code'
       );
     }
 
   } catch (error) {
-
     setStatus(
       'error',
-      error.message ===
-      'Failed to generate code'
+      error.message === 'Failed to generate code'
         ? error.message
         : 'Unable to connect to the pairing server.'
     );
 
   } finally {
-
     setTimeout(() => {
       btn.disabled = false;
       qrBtn.disabled = false;
       btn.textContent = 'Generate code';
     }, 2500);
-
   }
 }
 
@@ -1335,63 +1255,48 @@ async function startPairingDetection(number) {
 
   const startedAt = Date.now();
 
-  pairingCheckTimer =
-    setInterval(async () => {
+  pairingCheckTimer = setInterval(async () => {
 
-      if (
-        Date.now() - startedAt >
-        120000
-      ) {
-        clearInterval(
-          pairingCheckTimer
-        );
+    if (Date.now() - startedAt > 120000) {
+      clearInterval(pairingCheckTimer);
+      pairingCheckTimer = null;
+      return;
+    }
 
-        pairingCheckTimer = null;
+    try {
+      const response = await fetch(
+        '/pair/status?number=' + encodeURIComponent(number),
+        {
+          method: 'GET',
+          cache: 'no-store'
+        }
+      );
+
+      if (!response.ok) {
         return;
       }
 
-      try {
+      const data = await response.json();
 
-        const response =
-          await fetch(
-            '/pair/status?number=' +
-            encodeURIComponent(number),
-            {
-              method: 'GET',
-              cache: 'no-store'
-            }
-          );
+      if (
+        data.success === true &&
+        (
+          data.connected === true ||
+          data.paired === true ||
+          data.status === 'connected' ||
+          data.status === 'paired'
+        )
+      ) {
+        clearInterval(pairingCheckTimer);
+        pairingCheckTimer = null;
 
-        if (!response.ok) {
-          return;
-        }
-
-        const data =
-          await response.json();
-
-        if (
-          data.success === true &&
-          (
-            data.connected === true ||
-            data.paired === true ||
-            data.status === 'connected' ||
-            data.status === 'paired'
-          )
-        ) {
-
-          clearInterval(
-            pairingCheckTimer
-          );
-
-          pairingCheckTimer = null;
-
-          showSuccess(number);
-        }
-
-      } catch (error) {
+        showSuccess(number);
       }
 
-    }, 2000);
+    } catch (error) {
+    }
+
+  }, 2000);
 }
 
 function showSuccess(number) {
@@ -1404,8 +1309,7 @@ function showSuccess(number) {
 
   document.getElementById(
     'success-number-display'
-  ).textContent =
-    '+' + number;
+  ).textContent = '+' + number;
 
   document
     .getElementById('success-screen')
