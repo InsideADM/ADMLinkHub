@@ -1,7 +1,7 @@
 const {
     createSocket,
     sessions
-} = require('./BravoControl');
+} = require('./socket');
 
 const {
     ensureSessionDir,
