@@ -1,5 +1,5 @@
 {
-  "name": "adm-link-hub",
+  "name": "admlinkhub",
   "version": "1.0.0",
   "description": "ADM Link Hub - WhatsApp pairing and session service",
   "main": "server.js",
@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "@whiskeysockets/baileys": "npm:toxic-baileys@latest",
+    "better-sqlite3": "^12.4.1",
     "dotenv": "^16.4.7",
     "express": "^4.21.1",
     "express-rate-limit": "^7.5.0",
