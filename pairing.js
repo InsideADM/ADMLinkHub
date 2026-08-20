@@ -24,24 +24,20 @@ const logger = pino({
 
 const sockets = new Map();
 const pairingCodes = new Map();
-const connectionStates = new Map();
-const reconnecting = new Set();
 const pairingPromises = new Map();
+const reconnecting = new Set();
 
 async function getVersion() {
     try {
         const result =
             await fetchLatestBaileysVersion();
 
-        if (
-            result &&
-            Array.isArray(result.version)
-        ) {
+        if (result?.version) {
             return result.version;
         }
     } catch (error) {
         console.error(
-            'Unable to fetch Baileys version:',
+            'Baileys version lookup failed:',
             error.message
         );
     }
@@ -53,24 +49,10 @@ async function getVersion() {
     ];
 }
 
-function setConnectionState(
-    phoneNumber,
-    state
-) {
-    connectionStates.set(
-        phoneNumber,
-        state
-    );
-}
-
-function getConnectionState(
-    phoneNumber
-) {
-    return (
-        connectionStates.get(
-            phoneNumber
-        ) || 'disconnected'
-    );
+function wait(ms) {
+    return new Promise(resolve => {
+        setTimeout(resolve, ms);
+    });
 }
 
 async function createPairing(number) {
@@ -83,65 +65,100 @@ async function createPairing(number) {
         );
     }
 
-    createSession(
-        phoneNumber
-    );
+    createSession(phoneNumber);
 
-    const existingSocket =
-        sockets.get(
-            phoneNumber
+    if (sockets.has(phoneNumber)) {
+        const existingCode =
+            pairingCodes.get(
+                phoneNumber
+            );
+
+        if (existingCode) {
+            return {
+                socket:
+                    sockets.get(
+                        phoneNumber
+                    ),
+                code: existingCode
+            };
+        }
+
+        const existingPromise =
+            pairingPromises.get(
+                phoneNumber
+            );
+
+        if (existingPromise) {
+            const code =
+                await existingPromise;
+
+            return {
+                socket:
+                    sockets.get(
+                        phoneNumber
+                    ),
+                code
+            };
+        }
+
+        const sessionDir =
+            ensureSessionDir(
+                phoneNumber
+            );
+
+        const {
+            state
+        } =
+            await useMultiFileAuthState(
+                sessionDir
+            );
+
+        if (state.creds.registered) {
+            return {
+                socket:
+                    sockets.get(
+                        phoneNumber
+                    ),
+                code: null
+            };
+        }
+
+        const socket =
+            sockets.get(
+                phoneNumber
+            );
+
+        if (!socket) {
+            return createPairing(
+                phoneNumber
+            );
+        }
+
+        const promise =
+            generatePairingCode(
+                phoneNumber,
+                socket
+            );
+
+        pairingPromises.set(
+            phoneNumber,
+            promise
         );
 
-    if (existingSocket) {
-        return {
-            socket: existingSocket,
-            code:
-                pairingCodes.get(
-                    phoneNumber
-                ) || null,
-            status:
-                getConnectionState(
-                    phoneNumber
-                )
-        };
+        try {
+            const code =
+                await promise;
+
+            return {
+                socket,
+                code
+            };
+        } finally {
+            pairingPromises.delete(
+                phoneNumber
+            );
+        }
     }
-
-    if (
-        pairingPromises.has(
-            phoneNumber
-        )
-    ) {
-        return pairingPromises.get(
-            phoneNumber
-        );
-    }
-
-    const promise =
-        initializeSocket(
-            phoneNumber
-        );
-
-    pairingPromises.set(
-        phoneNumber,
-        promise
-    );
-
-    try {
-        return await promise;
-    } finally {
-        pairingPromises.delete(
-            phoneNumber
-        );
-    }
-}
-
-async function initializeSocket(
-    phoneNumber
-) {
-    setConnectionState(
-        phoneNumber,
-        'connecting'
-    );
 
     updateSessionStatus(
         phoneNumber,
@@ -176,18 +193,14 @@ async function initializeSocket(
             printQRInTerminal: false,
             markOnlineOnConnect: true,
             syncFullHistory: false,
-            generateHighQualityLinkPreview:
-                true,
-            connectTimeoutMs:
-                120000,
-            keepAliveIntervalMs:
-                30000,
-            defaultQueryTimeoutMs:
-                60000,
-            retryRequestDelayMs:
-                2000,
+            generateHighQualityLinkPreview: true,
+            connectTimeoutMs: 120000,
+            keepAliveIntervalMs: 30000,
+            defaultQueryTimeoutMs: 60000,
+            retryRequestDelayMs: 2000,
             getMessage:
-                async () => undefined
+                async () =>
+                    undefined
         });
 
     sockets.set(
@@ -228,9 +241,8 @@ async function initializeSocket(
                     phoneNumber
                 );
 
-                setConnectionState(
-                    phoneNumber,
-                    'connected'
+                pairingPromises.delete(
+                    phoneNumber
                 );
 
                 updateSessionStatus(
@@ -240,22 +252,6 @@ async function initializeSocket(
 
                 console.log(
                     `WhatsApp connected: ${phoneNumber}`
-                );
-
-                return;
-            }
-
-            if (
-                connection === 'connecting'
-            ) {
-                setConnectionState(
-                    phoneNumber,
-                    'connecting'
-                );
-
-                updateSessionStatus(
-                    phoneNumber,
-                    'connecting'
                 );
 
                 return;
@@ -275,9 +271,8 @@ async function initializeSocket(
                 phoneNumber
             );
 
-            setConnectionState(
-                phoneNumber,
-                'disconnected'
+            pairingPromises.delete(
+                phoneNumber
             );
 
             const statusCode =
@@ -293,11 +288,6 @@ async function initializeSocket(
             ) {
                 reconnecting.delete(
                     phoneNumber
-                );
-
-                setConnectionState(
-                    phoneNumber,
-                    'logged_out'
                 );
 
                 updateSessionStatus(
@@ -329,10 +319,6 @@ async function initializeSocket(
                 phoneNumber
             );
 
-            console.log(
-                `WhatsApp disconnected. Reconnecting ${phoneNumber}...`
-            );
-
             setTimeout(
                 async () => {
                     reconnecting.delete(
@@ -344,18 +330,13 @@ async function initializeSocket(
                             phoneNumber
                         );
                     } catch (error) {
-                        setConnectionState(
-                            phoneNumber,
-                            'disconnected'
-                        );
-
                         updateSessionStatus(
                             phoneNumber,
                             'disconnected'
                         );
 
                         console.error(
-                            `Reconnect failed for ${phoneNumber}:`,
+                            'Reconnect error:',
                             error.message
                         );
                     }
@@ -366,77 +347,86 @@ async function initializeSocket(
     );
 
     if (
-        state.creds.registered
+        !state.creds.registered
     ) {
-        return {
-            socket,
-            code: null,
-            status:
-                getConnectionState(
-                    phoneNumber
-                )
-        };
-    }
+        const promise =
+            generatePairingCode(
+                phoneNumber,
+                socket
+            );
 
-    const code =
-        await waitForPairingCode(
-            socket,
-            state,
-            phoneNumber
+        pairingPromises.set(
+            phoneNumber,
+            promise
         );
+
+        try {
+            const code =
+                await promise;
+
+            return {
+                socket,
+                code
+            };
+        } finally {
+            pairingPromises.delete(
+                phoneNumber
+            );
+        }
+    }
 
     return {
         socket,
-        code,
-        status:
-            getConnectionState(
-                phoneNumber
-            )
+        code: null
     };
 }
 
-async function waitForPairingCode(
-    socket,
-    state,
-    phoneNumber
+async function generatePairingCode(
+    phoneNumber,
+    socket
 ) {
     if (
-        state.creds.registered
+        pairingCodes.has(
+            phoneNumber
+        )
     ) {
-        return null;
+        return pairingCodes.get(
+            phoneNumber
+        );
     }
 
-    const existingCode =
-        pairingCodes.get(
+    await wait(3000);
+
+    const existingSocket =
+        sockets.get(
             phoneNumber
         );
 
-    if (existingCode) {
-        return existingCode;
-    }
-
-    await new Promise(
-        resolve =>
-            setTimeout(
-                resolve,
-                2500
-            )
-    );
-
     if (
-        state.creds.registered
-    ) {
-        return null;
-    }
-
-    if (
-        !sockets.has(
-            phoneNumber
-        )
+        !existingSocket ||
+        existingSocket !== socket
     ) {
         throw new Error(
             'WhatsApp socket is no longer available'
         );
+    }
+
+    const sessionDir =
+        ensureSessionDir(
+            phoneNumber
+        );
+
+    const {
+        state
+    } =
+        await useMultiFileAuthState(
+            sessionDir
+        );
+
+    if (
+        state.creds.registered
+    ) {
+        return null;
     }
 
     try {
@@ -445,19 +435,15 @@ async function waitForPairingCode(
                 phoneNumber
             );
 
+        if (!code) {
+            throw new Error(
+                'WhatsApp returned an empty pairing code'
+            );
+        }
+
         pairingCodes.set(
             phoneNumber,
             code
-        );
-
-        updateSessionStatus(
-            phoneNumber,
-            'waiting_for_pairing'
-        );
-
-        setConnectionState(
-            phoneNumber,
-            'waiting_for_pairing'
         );
 
         console.log(
@@ -465,24 +451,21 @@ async function waitForPairingCode(
         );
 
         return code;
+
     } catch (error) {
         updateSessionStatus(
             phoneNumber,
             'disconnected'
         );
 
-        setConnectionState(
-            phoneNumber,
-            'disconnected'
+        throw new Error(
+            error.message ||
+            'Unable to generate pairing code'
         );
-
-        throw error;
     }
 }
 
-async function getPairingCode(
-    number
-) {
+async function getPairingCode(number) {
     const phoneNumber =
         normalizeNumber(number);
 
@@ -492,9 +475,7 @@ async function getPairingCode(
         );
     }
 
-    createSession(
-        phoneNumber
-    );
+    createSession(phoneNumber);
 
     const existingCode =
         pairingCodes.get(
@@ -505,12 +486,13 @@ async function getPairingCode(
         return existingCode;
     }
 
-    if (
-        getConnectionState(
+    const existingPromise =
+        pairingPromises.get(
             phoneNumber
-        ) === 'connected'
-    ) {
-        return null;
+        );
+
+    if (existingPromise) {
+        return await existingPromise;
     }
 
     let socket =
@@ -532,6 +514,12 @@ async function getPairingCode(
         }
     }
 
+    if (!socket) {
+        throw new Error(
+            'WhatsApp socket is unavailable'
+        );
+    }
+
     const sessionDir =
         ensureSessionDir(
             phoneNumber
@@ -550,35 +538,30 @@ async function getPairingCode(
         return null;
     }
 
-    const code =
-        await socket.requestPairingCode(
-            phoneNumber
+    const promise =
+        generatePairingCode(
+            phoneNumber,
+            socket
         );
 
-    pairingCodes.set(
+    pairingPromises.set(
         phoneNumber,
-        code
+        promise
     );
 
-    updateSessionStatus(
-        phoneNumber,
-        'waiting_for_pairing'
-    );
-
-    setConnectionState(
-        phoneNumber,
-        'waiting_for_pairing'
-    );
-
-    return code;
+    try {
+        return await promise;
+    } finally {
+        pairingPromises.delete(
+            phoneNumber
+        );
+    }
 }
 
 function getSocket(number) {
-    return (
-        sockets.get(
-            normalizeNumber(number)
-        ) || null
-    );
+    return sockets.get(
+        normalizeNumber(number)
+    ) || null;
 }
 
 function getSessions() {
@@ -588,38 +571,12 @@ function getSessions() {
 }
 
 function isConnected(number) {
-    return (
-        getConnectionState(
-            number
-        ) === 'connected'
-    );
-}
-
-function getConnectionStatus(number) {
-    return getConnectionState(
-        normalizeNumber(number)
-    );
-}
-
-function getPairingStatus(number) {
     const phoneNumber =
         normalizeNumber(number);
 
-    return {
-        number: phoneNumber,
-        connected:
-            getConnectionState(
-                phoneNumber
-            ) === 'connected',
-        status:
-            getConnectionState(
-                phoneNumber
-            ),
-        pairingCode:
-            pairingCodes.get(
-                phoneNumber
-            ) || null
-    };
+    return sockets.has(
+        phoneNumber
+    );
 }
 
 module.exports = {
@@ -627,7 +584,5 @@ module.exports = {
     getPairingCode,
     getSocket,
     getSessions,
-    isConnected,
-    getConnectionStatus,
-    getPairingStatus
+    isConnected
 };
