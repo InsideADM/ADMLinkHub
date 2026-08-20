@@ -3,55 +3,78 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-
-<title>Pair Device — ADM Link Hub</title>
+<meta name="theme-color" content="#ffffff">
+<title>Pair — ADM Link Hub</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 
 <style>
 :root{
-  --bg:#ffffff;
-  --surface:#ffffff;
+  --bg:#fff;
+  --surface:#fff;
   --surface-2:#f7f7f8;
-  --text:#111111;
-  --muted:#6b7280;
-  --border:#e5e7eb;
-  --border-hover:#d1d5db;
-  --primary:#111111;
-  --primary-hover:#2b2b2b;
-  --soft:#f3f4f6;
+  --text:#171717;
+  --muted:#737373;
+  --border:#e5e5e5;
+  --border-strong:#d4d4d4;
+  --blue:#2563eb;
+  --blue-hover:#1d4ed8;
+  --blue-soft:#eff6ff;
   --success:#16a34a;
   --danger:#dc2626;
-  --shadow:0 1px 2px rgba(0,0,0,.03),0 12px 40px rgba(0,0,0,.05);
+  --shadow:0 10px 35px rgba(0,0,0,.06);
 }
 
-html{
-  min-height:100%;
-  touch-action:manipulation;
-  overscroll-behavior:none;
+html.dark{
+  --bg:#0a0a0a;
+  --surface:#111;
+  --surface-2:#181818;
+  --text:#f5f5f5;
+  --muted:#a3a3a3;
+  --border:#262626;
+  --border-strong:#404040;
+  --blue:#3b82f6;
+  --blue-hover:#60a5fa;
+  --blue-soft:#172554;
+  --success:#22c55e;
+  --danger:#ef4444;
+  --shadow:0 20px 50px rgba(0,0,0,.35);
 }
 
 *{
   box-sizing:border-box;
   margin:0;
   padding:0;
-  -webkit-tap-highlight-color:transparent;
+}
+
+html,
+body{
+  width:100%;
+  min-height:100%;
+  touch-action:manipulation;
+}
+
+html{
+  -webkit-text-size-adjust:100%;
 }
 
 body{
   min-height:100vh;
   font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-  color:var(--text);
   background:var(--bg);
+  color:var(--text);
   display:flex;
   justify-content:center;
-  padding:28px 20px;
+  padding:0 20px;
+  transition:
+    background .2s ease,
+    color .2s ease;
   -webkit-font-smoothing:antialiased;
-  touch-action:manipulation;
-  overscroll-behavior:none;
-  transition:background .2s,color .2s;
 }
 
 button,
@@ -59,27 +82,38 @@ input{
   font:inherit;
 }
 
-.page{
-  width:100%;
-  max-width:440px;
+button{
+  -webkit-tap-highlight-color:transparent;
 }
 
 .topbar{
+  position:fixed;
+  top:0;
+  left:0;
+  right:0;
+  height:68px;
   display:flex;
   align-items:center;
   justify-content:space-between;
-  margin-bottom:70px;
+  padding:0 24px;
+  background:color-mix(in srgb,var(--bg) 92%,transparent);
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+  border-bottom:1px solid color-mix(in srgb,var(--border) 70%,transparent);
+  z-index:100;
 }
 
 .brand{
   display:flex;
   align-items:center;
   gap:10px;
+  text-decoration:none;
+  color:var(--text);
 }
 
 .brand img{
-  width:34px;
-  height:34px;
+  width:31px;
+  height:31px;
   border-radius:50%;
   object-fit:cover;
 }
@@ -87,78 +121,74 @@ input{
 .brand-name{
   font-size:14px;
   font-weight:600;
-  letter-spacing:-.2px;
+  letter-spacing:-.25px;
 }
 
 .theme-toggle{
-  width:42px;
-  height:26px;
-  padding:2px;
+  width:58px;
+  height:32px;
   border:1px solid var(--border);
   border-radius:999px;
-  background:var(--soft);
+  padding:3px;
+  background:var(--surface-2);
   cursor:pointer;
   display:flex;
   align-items:center;
+  position:relative;
   transition:background .2s,border-color .2s;
 }
 
-.theme-knob{
-  width:20px;
-  height:20px;
+.theme-toggle:hover{
+  border-color:var(--border-strong);
+}
+
+.toggle-knob{
+  width:24px;
+  height:24px;
   border-radius:50%;
   background:var(--surface);
   display:flex;
   align-items:center;
   justify-content:center;
   color:var(--text);
-  box-shadow:0 1px 3px rgba(0,0,0,.18);
+  box-shadow:0 1px 4px rgba(0,0,0,.14);
   transform:translateX(0);
-  transition:transform .2s,background .2s,color .2s;
+  transition:transform .2s ease;
 }
 
-.theme-knob svg{
-  width:12px;
-  height:12px;
-  fill:currentColor;
+html.dark .toggle-knob{
+  transform:translateX(24px);
 }
 
-body.dark{
-  --bg:#0a0a0a;
-  --surface:#111111;
-  --surface-2:#171717;
-  --text:#f5f5f5;
-  --muted:#929292;
-  --border:#292929;
-  --border-hover:#3a3a3a;
-  --primary:#f5f5f5;
-  --primary-hover:#dcdcdc;
-  --soft:#1c1c1c;
-  --shadow:0 1px 2px rgba(0,0,0,.3),0 12px 40px rgba(0,0,0,.25);
+.toggle-knob .material-icons-round{
+  font-size:16px;
 }
 
-body.dark .theme-knob{
-  transform:translateX(16px);
+.page{
+  width:100%;
+  max-width:430px;
+  padding-top:125px;
+  padding-bottom:50px;
 }
 
-.hero{
+.header{
   text-align:center;
-  margin-bottom:34px;
+  margin-bottom:28px;
 }
 
-.hero h1{
-  font-size:32px;
-  line-height:1.15;
+.header h1{
+  font-size:28px;
+  line-height:1.2;
   font-weight:600;
-  letter-spacing:-1.2px;
+  letter-spacing:-.9px;
 }
 
-.hero p{
-  max-width:360px;
-  margin:12px auto 0;
+.header p{
+  max-width:350px;
+  margin:10px auto 0;
   color:var(--muted);
   font-size:14px;
-  line-height:1.6;
+  line-height:1.55;
 }
 
 .card{
@@ -173,7 +203,8 @@ body.dark .theme-knob{
   display:block;
   font-size:13px;
   font-weight:500;
-  margin-bottom:9px;
+  color:var(--text);
+  margin-bottom:8px;
 }
 
 .input-wrap{
@@ -186,21 +217,21 @@ body.dark .theme-knob{
   top:50%;
   transform:translateY(-50%);
   color:var(--muted);
+  font-size:15px;
   pointer-events:none;
-  font-size:14px;
 }
 
 input{
   width:100%;
   height:48px;
-  padding:0 14px 0 29px;
-  border:1px solid var(--border);
+  border:1px solid var(--border-strong);
   border-radius:10px;
-  outline:none;
   background:var(--surface);
   color:var(--text);
+  padding:0 14px 0 30px;
   font-size:14px;
-  transition:border-color .15s,box-shadow .15s;
+  outline:none;
+  transition:border-color .15s,box-shadow .15s,background .2s;
 }
 
 input::placeholder{
@@ -208,19 +239,19 @@ input::placeholder{
 }
 
 input:hover{
-  border-color:var(--border-hover);
+  border-color:#a3a3a3;
 }
 
 input:focus{
-  border-color:#777;
-  box-shadow:0 0 0 3px rgba(127,127,127,.12);
+  border-color:var(--blue);
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--blue) 14%,transparent);
 }
 
 .hint{
   margin-top:8px;
   color:var(--muted);
-  font-size:11px;
-  line-height:1.5;
+  font-size:12px;
+  line-height:1.45;
 }
 
 .buttons{
@@ -231,99 +262,86 @@ input:focus{
 }
 
 button{
-  border:none;
-  outline:none;
-  cursor:pointer;
-}
-
-.action{
   height:46px;
-  border-radius:9px;
-  font-size:13px;
-  font-weight:500;
-  transition:background .15s,border-color .15s,transform .1s;
+  border-radius:10px;
+  cursor:pointer;
+  transition:
+    background .15s,
+    border-color .15s,
+    transform .1s,
+    opacity .15s;
 }
 
-.action:active{
+button:active{
   transform:scale(.98);
 }
 
 .primary{
-  background:var(--primary);
-  color:var(--bg);
+  border:1px solid var(--blue);
+  background:var(--blue);
+  color:#fff;
 }
 
 .primary:hover{
-  background:var(--primary-hover);
+  background:var(--blue-hover);
+  border-color:var(--blue-hover);
 }
 
 .secondary{
+  border:1px solid var(--border);
   background:var(--surface);
   color:var(--text);
-  border:1px solid var(--border);
 }
 
 .secondary:hover{
   background:var(--surface-2);
-  border-color:var(--border-hover);
 }
 
 button:disabled{
-  opacity:.5;
   cursor:not-allowed;
+  opacity:.6;
 }
 
 .status{
   display:none;
   margin-top:14px;
+  border-radius:10px;
   padding:11px 13px;
-  border-radius:9px;
-  font-size:12px;
+  font-size:13px;
   line-height:1.4;
 }
 
 .status.loading{
   display:flex;
   align-items:center;
-  gap:8px;
-  background:var(--surface-2);
-  color:var(--muted);
-  border:1px solid var(--border);
+  gap:9px;
+  color:var(--blue);
+  background:var(--blue-soft);
+  border:1px solid color-mix(in srgb,var(--blue) 18%,transparent);
 }
 
 .status.success{
   display:block;
-  background:#f0fdf4;
-  color:#15803d;
-  border:1px solid #dcfce7;
+  color:var(--success);
+  background:color-mix(in srgb,var(--success) 8%,var(--surface));
+  border:1px solid color-mix(in srgb,var(--success) 18%,var(--surface));
 }
 
 .status.error{
   display:block;
-  background:#fef2f2;
-  color:#b91c1c;
-  border:1px solid #fee2e2;
-}
-
-body.dark .status.success{
-  background:#0d1b12;
-  border-color:#183b25;
-  color:#4ade80;
-}
-
-body.dark .status.error{
-  background:#1c0c0c;
-  border-color:#3b1818;
-  color:#f87171;
+  color:var(--danger);
+  background:color-mix(in srgb,var(--danger) 8%,var(--surface));
+  border:1px solid color-mix(in srgb,var(--danger) 18%,var(--surface));
 }
 
 .spinner{
-  width:13px;
-  height:13px;
-  border:2px solid var(--border);
-  border-top-color:var(--text);
+  width:14px;
+  height:14px;
+  border:2px solid color-mix(in srgb,var(--blue) 25%,transparent);
+  border-top-color:var(--blue);
   border-radius:50%;
   animation:spin .7s linear infinite;
+  flex-shrink:0;
 }
 
 @keyframes spin{
@@ -340,12 +358,13 @@ body.dark .status.error{
   align-items:center;
   justify-content:center;
   padding:20px;
-  background:rgba(255,255,255,.78);
-  backdrop-filter:blur(12px);
+  background:rgba(0,0,0,.38);
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
 }
 
-body.dark .overlay{
-  background:rgba(0,0,0,.72);
+html.dark .overlay{
+  background:rgba(0,0,0,.65);
 }
 
 .overlay.open{
@@ -354,48 +373,60 @@ body.dark .overlay{
 
 .dialog{
   width:100%;
-  max-width:410px;
-  max-height:calc(100vh - 40px);
-  overflow:auto;
+  max-width:390px;
   background:var(--surface);
   border:1px solid var(--border);
-  border-radius:16px;
-  box-shadow:0 20px 70px rgba(0,0,0,.15);
+  border-radius:18px;
+  box-shadow:0 25px 80px rgba(0,0,0,.18);
+  overflow:hidden;
+  animation:dialogIn .18s ease-out;
+}
+
+@keyframes dialogIn{
+  from{
+    opacity:0;
+    transform:translateY(8px) scale(.985);
+  }
+  to{
+    opacity:1;
+    transform:translateY(0) scale(1);
+  }
 }
 
 .dialog-header{
-  padding:20px;
-  border-bottom:1px solid var(--border);
+  padding:20px 22px 18px;
   display:flex;
   align-items:flex-start;
   justify-content:space-between;
-  gap:15px;
+  gap:14px;
 }
 
 .dialog-title{
-  font-size:15px;
+  font-size:16px;
   font-weight:600;
-  letter-spacing:-.2px;
+  letter-spacing:-.25px;
 }
 
 .dialog-subtitle{
   margin-top:5px;
-  color:var(--muted);
   font-size:12px;
+  color:var(--muted);
   line-height:1.45;
 }
 
 .close{
   width:30px;
   height:30px;
-  border:1px solid var(--border);
-  border-radius:8px;
-  background:var(--surface);
+  border:0;
+  outline:0;
+  background:transparent;
   color:var(--muted);
-  font-size:18px;
+  border-radius:50%;
   display:flex;
   align-items:center;
   justify-content:center;
+  padding:0;
+  flex-shrink:0;
 }
 
 .close:hover{
@@ -403,8 +434,12 @@ body.dark .overlay{
   color:var(--text);
 }
 
+.close .material-icons-round{
+  font-size:21px;
+}
+
 .dialog-body{
-  padding:20px;
+  padding:2px 22px 22px;
 }
 
 .steps{
@@ -417,28 +452,28 @@ body.dark .overlay{
 .step{
   display:flex;
   align-items:flex-start;
-  gap:11px;
+  gap:12px;
 }
 
 .step-number{
   width:25px;
   height:25px;
-  flex-shrink:0;
   border-radius:50%;
-  background:var(--soft);
-  color:var(--text);
+  background:var(--blue-soft);
+  color:var(--blue);
   display:flex;
   align-items:center;
   justify-content:center;
   font-size:11px;
   font-weight:600;
+  flex-shrink:0;
 }
 
 .step-text{
   padding-top:3px;
   color:var(--muted);
-  font-size:12px;
-  line-height:1.55;
+  font-size:13px;
+  line-height:1.5;
 }
 
 .step-text strong{
@@ -447,58 +482,58 @@ body.dark .overlay{
 }
 
 .code-label{
-  margin-bottom:8px;
+  font-size:11px;
   color:var(--muted);
-  font-size:10px;
-  font-weight:600;
+  font-weight:500;
+  margin-bottom:8px;
   text-transform:uppercase;
-  letter-spacing:.06em;
+  letter-spacing:.05em;
 }
 
 .code-box{
   position:relative;
-  padding:21px 12px 14px;
-  border:1px solid var(--border);
-  border-radius:11px;
-  background:var(--surface-2);
+  border:1px solid color-mix(in srgb,var(--blue) 20%,var(--border));
+  background:var(--blue-soft);
+  border-radius:12px;
+  padding:20px 12px 15px;
   text-align:center;
 }
 
 .code{
-  font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
-  color:var(--text);
-  font-size:26px;
+  font-size:27px;
+  line-height:1;
   font-weight:600;
   letter-spacing:5px;
+  color:var(--blue);
+  font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
 }
 
 .copy{
   position:absolute;
-  right:8px;
-  top:8px;
-  height:27px;
+  right:9px;
+  top:9px;
+  height:28px;
   padding:0 8px;
-  border:1px solid var(--border);
   border-radius:6px;
+  border:1px solid color-mix(in srgb,var(--blue) 20%,var(--border));
   background:var(--surface);
-  color:var(--muted);
-  font-size:9px;
+  color:var(--blue);
+  font-size:10px;
   font-weight:600;
 }
 
 .copy:hover{
-  color:var(--text);
-  background:var(--surface-2);
+  background:var(--blue-soft);
 }
 
 .timer{
-  margin-top:9px;
+  margin-top:10px;
   color:var(--muted);
-  font-size:10px;
+  font-size:11px;
 }
 
 .timer span{
-  color:var(--text);
+  color:var(--blue);
 }
 
 .qr-section{
@@ -507,31 +542,33 @@ body.dark .overlay{
 
 .qr-container{
   display:flex;
-  justify-content:center;
   align-items:center;
-  padding:10px;
+  justify-content:center;
+  padding:4px 0 12px;
 }
 
 .qr-container canvas,
 .qr-container img{
+  display:block;
   width:220px!important;
   height:220px!important;
   padding:10px;
   background:#fff;
   border:1px solid var(--border);
-  border-radius:10px;
+  border-radius:12px;
 }
 
 .qr-instruction{
-  margin-top:5px;
   text-align:center;
   color:var(--muted);
-  font-size:11px;
-  line-height:1.5;
+  font-size:12px;
+  line-height:1.6;
+  max-width:280px;
+  margin:0 auto;
 }
 
 .dialog-footer{
-  padding:0 20px 20px;
+  padding:0 22px 22px;
 }
 
 .dialog-action{
@@ -542,11 +579,11 @@ body.dark .overlay{
   position:fixed;
   inset:0;
   z-index:2000;
+  background:var(--bg);
   display:none;
   align-items:center;
   justify-content:center;
   padding:24px;
-  background:var(--bg);
 }
 
 .success-screen.show{
@@ -560,73 +597,68 @@ body.dark .overlay{
 }
 
 .success-icon{
-  width:54px;
-  height:54px;
-  margin:0 auto 19px;
+  width:56px;
+  height:56px;
+  margin:0 auto 20px;
   border-radius:50%;
-  background:#f0fdf4;
-  border:1px solid #bbf7d0;
+  background:color-mix(in srgb,var(--success) 10%,var(--surface));
   color:var(--success);
   display:flex;
   align-items:center;
   justify-content:center;
-  font-size:23px;
 }
 
-body.dark .success-icon{
-  background:#0d1b12;
-  border-color:#183b25;
+.success-icon .material-icons-round{
+  font-size:28px;
 }
 
 .success-title{
   font-size:28px;
   line-height:1.2;
   font-weight:600;
-  letter-spacing:-.8px;
+  letter-spacing:-.7px;
 }
 
 .success-sub{
+  margin:10px auto 22px;
   max-width:340px;
-  margin:10px auto 20px;
   color:var(--muted);
-  font-size:13px;
+  font-size:14px;
   line-height:1.6;
 }
 
 .success-number{
   display:inline-flex;
   align-items:center;
-  gap:7px;
-  margin-bottom:23px;
-  padding:8px 12px;
-  border:1px solid #dcfce7;
+  gap:8px;
+  padding:8px 13px;
+  border:1px solid color-mix(in srgb,var(--success) 20%,var(--border));
+  background:color-mix(in srgb,var(--success) 8%,var(--surface));
   border-radius:8px;
-  background:#f0fdf4;
-  color:#15803d;
+  color:var(--success);
+  font-size:13px;
   font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
-  font-size:12px;
+  margin-bottom:24px;
 }
 
-body.dark .success-number{
-  background:#0d1b12;
-  border-color:#183b25;
-  color:#4ade80;
+.success-number .material-icons-round{
+  font-size:17px;
 }
 
 .success-steps{
-  margin-bottom:20px;
-  overflow:hidden;
-  border:1px solid var(--border);
-  border-radius:11px;
-  background:var(--surface);
   text-align:left;
+  border:1px solid var(--border);
+  border-radius:12px;
+  overflow:hidden;
+  background:var(--surface);
+  margin-bottom:22px;
 }
 
 .success-step{
   display:flex;
   align-items:flex-start;
-  gap:11px;
-  padding:14px;
+  gap:12px;
+  padding:15px;
   border-bottom:1px solid var(--border);
 }
 
@@ -635,39 +667,39 @@ body.dark .success-number{
 }
 
 .ss-num{
-  width:24px;
-  height:24px;
-  flex-shrink:0;
+  width:25px;
+  height:25px;
   border-radius:50%;
-  background:var(--soft);
-  color:var(--text);
+  background:var(--blue-soft);
+  color:var(--blue);
   display:flex;
   align-items:center;
   justify-content:center;
-  font-size:10px;
+  font-size:11px;
   font-weight:600;
+  flex-shrink:0;
 }
 
 .ss-text{
   padding-top:2px;
   color:var(--muted);
-  font-size:11px;
+  font-size:12px;
   line-height:1.5;
 }
 
 .ss-text strong{
   color:var(--text);
+  font-weight:600;
 }
 
 .success-pair-again{
+  font-size:13px;
   color:var(--muted);
-  font-size:12px;
 }
 
 .success-pair-again a{
-  color:var(--text);
+  color:var(--blue);
   text-decoration:none;
-  font-weight:500;
 }
 
 .success-pair-again a:hover{
@@ -676,23 +708,32 @@ body.dark .success-number{
 
 @media(max-width:480px){
   body{
-    padding:22px 16px;
+    padding:0 16px;
   }
 
   .topbar{
-    margin-bottom:55px;
+    padding:0 18px;
   }
 
-  .hero h1{
-    font-size:29px;
+  .page{
+    padding-top:112px;
+  }
+
+  .card{
+    padding:20px;
+  }
+
+  .header h1{
+    font-size:25px;
   }
 
   .buttons{
     grid-template-columns:1fr;
   }
 
-  .card{
-    padding:20px;
+  .dialog{
+    max-height:calc(100vh - 32px);
+    overflow-y:auto;
   }
 }
 </style>
@@ -700,47 +741,29 @@ body.dark .success-number{
 
 <body>
 
+<header class="topbar">
+  <a class="brand" href="/">
+    <img src="https://raw.githubusercontent.com/InsideADM/InsideADM/main/assets/adm-logo.png" alt="ADM">
+    <span class="brand-name">ADM Link Hub</span>
+  </a>
+
+  <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+    <span class="toggle-knob">
+      <span class="material-icons-round" id="themeIcon">light_mode</span>
+    </span>
+  </button>
+</header>
+
 <main class="page">
 
-  <div class="topbar">
-
-    <div class="brand">
-      <img
-        src="https://raw.githubusercontent.com/InsideADM/InsideADM/main/assets/adm-logo.png"
-        alt="ADM"
-      >
-      <span class="brand-name">ADM Link Hub</span>
-    </div>
-
-    <button
-      class="theme-toggle"
-      id="themeToggle"
-      aria-label="Toggle theme"
-      type="button"
-    >
-      <span class="theme-knob" id="themeKnob">
-        <svg id="sunIcon" viewBox="0 0 24 24">
-          <path d="M12 2.5a1 1 0 0 1 1 1v1a1 1 0 1 1-2 0v-1a1 1 0 0 1 1-1Zm0 16a1 1 0 0 1 1 1v1a1 1 0 1 1-2 0v-1a1 1 0 0 1 1-1Zm9.5-6.5a1 1 0 0 1-1 1h-1a1 1 0 1 1 0-2h1a1 1 0 0 1 1 1ZM5.5 12a1 1 0 0 1-1 1h-1a1 1 0 1 1 0-2h1a1 1 0 0 1 1 1Zm13.01-6.01a1 1 0 0 1 0 1.41l-.71.71a1 1 0 0 1-1.41-1.41l.71-.71a1 1 0 0 1 1.41 0ZM6.61 17.39a1 1 0 0 1 0 1.41l-.71.71a1 1 0 0 1-1.41-1.41l.71-.71a1 1 0 0 1 1.41 0Zm11.9 2.12a1 1 0 0 1-1.41 0l-.71-.71a1 1 0 1 1 1.41-1.41l.71.71a1 1 0 0 1 0 1.41ZM6.61 6.61A1 1 0 0 1 5.2 6.61l-.71-.71A1 1 0 0 1 5.9 4.49l.71.71a1 1 0 0 1 0 1.41ZM12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10Z"/>
-        </svg>
-
-        <svg id="moonIcon" viewBox="0 0 24 24" style="display:none">
-          <path d="M20.7 15.2a1 1 0 0 0-1.08-.18A8.5 8.5 0 0 1 8.98 4.38a1 1 0 0 0-1.26-1.26A10.5 10.5 0 1 0 20.88 16.28a1 1 0 0 0-.18-1.08ZM12 21a8.5 8.5 0 0 1-6.76-13.66A10.5 10.5 0 0 0 16.66 18.1 8.5 8.5 0 0 1 12 21Z"/>
-        </svg>
-      </span>
-    </button>
-
-  </div>
-
-  <section class="hero">
+  <header class="header">
     <h1>Pair your device</h1>
-    <p>Connect your account securely with ADM Link Hub.</p>
-  </section>
+    <p>Connect your WhatsApp account to ADM Link Hub.</p>
+  </header>
 
   <section class="card">
 
-    <label class="label" for="number">
-      Phone number
-    </label>
+    <label class="label" for="number">WhatsApp number</label>
 
     <div class="input-wrap">
       <span class="input-prefix">+</span>
@@ -760,21 +783,11 @@ body.dark .success-number{
 
     <div class="buttons">
 
-      <button
-        class="action primary"
-        id="pairBtn"
-        type="button"
-        onclick="doPair()"
-      >
+      <button class="primary" id="pairBtn" onclick="doPair()">
         Generate code
       </button>
 
-      <button
-        class="action secondary"
-        id="qrBtn"
-        type="button"
-        onclick="showQR()"
-      >
+      <button class="secondary" id="qrBtn" onclick="showQR()">
         Show QR
       </button>
 
@@ -801,16 +814,12 @@ body.dark .success-number{
         </div>
 
         <div class="dialog-subtitle" id="dialogSub">
-          Follow the steps below.
+          Follow the steps below in WhatsApp.
         </div>
       </div>
 
-      <button
-        class="close"
-        type="button"
-        onclick="closeDialog()"
-      >
-        ×
+      <button class="close" onclick="closeDialog()" aria-label="Close">
+        <span class="material-icons-round">close</span>
       </button>
 
     </div>
@@ -829,7 +838,7 @@ body.dark .success-number{
         <div class="step">
           <div class="step-number">2</div>
           <div class="step-text">
-            Open <strong>Linked Devices</strong>.
+            Open <strong>Linked Devices</strong> from the WhatsApp menu.
           </div>
         </div>
 
@@ -858,11 +867,7 @@ body.dark .success-number{
 
         <div class="code-box">
 
-          <button
-            class="copy"
-            type="button"
-            onclick="copyCode()"
-          >
+          <button class="copy" onclick="copyCode()">
             COPY
           </button>
 
@@ -871,8 +876,7 @@ body.dark .success-number{
           </div>
 
           <div class="timer">
-            Code is valid for approximately
-            <span>60 seconds</span>.
+            Code is valid for approximately <span>60 seconds</span>.
           </div>
 
         </div>
@@ -888,7 +892,7 @@ body.dark .success-number{
         <div class="qr-container" id="qrContainer"></div>
 
         <div class="qr-instruction">
-          Open WhatsApp → Linked Devices → Link with QR code.
+          Open WhatsApp, go to Linked Devices, then scan the QR code.
         </div>
 
       </div>
@@ -898,9 +902,8 @@ body.dark .success-number{
     <div class="dialog-footer">
 
       <button
-        class="action primary dialog-action"
+        class="primary dialog-action"
         id="dialogActionBtn"
-        type="button"
         onclick="closeDialog()"
       >
         Continue
@@ -917,7 +920,7 @@ body.dark .success-number{
   <div class="success-card">
 
     <div class="success-icon">
-      ✓
+      <span class="material-icons-round">check</span>
     </div>
 
     <h2 class="success-title">
@@ -925,14 +928,12 @@ body.dark .success-number{
     </h2>
 
     <p class="success-sub">
-      Your device has been successfully connected with ADM Link Hub.
+      Your WhatsApp device has been successfully paired with ADM Link Hub.
     </p>
 
     <div class="success-number">
-      <span>✓</span>
-      <span id="success-number-display">
-        +000000000000
-      </span>
+      <span class="material-icons-round">check_circle</span>
+      <span id="success-number-display">+000000000000</span>
     </div>
 
     <div class="success-steps">
@@ -940,21 +941,21 @@ body.dark .success-number{
       <div class="success-step">
         <div class="ss-num">1</div>
         <div class="ss-text">
-          Your account is now <strong>linked</strong>.
+          Your WhatsApp session is now <strong>linked</strong>.
         </div>
       </div>
 
       <div class="success-step">
         <div class="ss-num">2</div>
         <div class="ss-text">
-          Your session is <strong>saved</strong> and can survive restarts.
+          The session is <strong>saved</strong> and can survive bot restarts.
         </div>
       </div>
 
       <div class="success-step">
         <div class="ss-num">3</div>
         <div class="ss-text">
-          You can now continue using your connected device.
+          WhatsApp may send a <strong>confirmation notification</strong>.
         </div>
       </div>
 
@@ -987,42 +988,58 @@ const pairCodeEl = document.getElementById('pairCode');
 const dialogActionBtn = document.getElementById('dialogActionBtn');
 
 const themeToggle = document.getElementById('themeToggle');
-const sunIcon = document.getElementById('sunIcon');
-const moonIcon = document.getElementById('moonIcon');
+const themeIcon = document.getElementById('themeIcon');
 
 let currentCode = null;
 let pairingNumber = null;
 let pairingCheckTimer = null;
 
-function setTheme(dark){
-  document.body.classList.toggle('dark', dark);
+function applyTheme(theme) {
+  const dark = theme === 'dark';
 
-  sunIcon.style.display = dark ? 'none' : 'block';
-  moonIcon.style.display = dark ? 'block' : 'none';
+  document.documentElement.classList.toggle('dark', dark);
 
-  localStorage.setItem(
-    'adm-link-hub-theme',
-    dark ? 'dark' : 'light'
+  themeIcon.textContent = dark
+    ? 'dark_mode'
+    : 'light_mode';
+
+  document.querySelector('meta[name="theme-color"]').setAttribute(
+    'content',
+    dark ? '#0a0a0a' : '#ffffff'
+  );
+
+  localStorage.setItem('adm-theme', theme);
+}
+
+const savedTheme = localStorage.getItem('adm-theme');
+
+if (savedTheme) {
+  applyTheme(savedTheme);
+} else {
+  applyTheme(
+    window.matchMedia('(prefers-color-scheme: dark)').matches
+      ? 'dark'
+      : 'light'
   );
 }
 
-const savedTheme =
-  localStorage.getItem('adm-link-hub-theme');
-
-setTheme(savedTheme === 'dark');
-
-themeToggle.addEventListener('click', function(){
-  setTheme(!document.body.classList.contains('dark'));
+themeToggle.addEventListener('click', () => {
+  applyTheme(
+    document.documentElement.classList.contains('dark')
+      ? 'light'
+      : 'dark'
+  );
 });
 
-function setStatus(type, message){
+function setStatus(type, message) {
   bar.className = 'status ' + type;
   barTxt.textContent = message;
-  spin.style.display =
-    type === 'loading' ? 'block' : 'none';
+  spin.style.display = type === 'loading'
+    ? 'block'
+    : 'none';
 }
 
-function getNumber(){
+function getNumber() {
   return document
     .getElementById('number')
     .value
@@ -1030,66 +1047,45 @@ function getNumber(){
     .replace(/[^0-9]/g, '');
 }
 
-function openDialog(code, isQR){
-
-  if(isQR){
+function openDialog(code, isQR) {
+  if (isQR) {
 
     dialogTitle.textContent = 'Scan QR code';
-    dialogSub.textContent =
-      'Use your phone to scan this code.';
+    dialogSub.textContent = 'Use WhatsApp on your phone to scan this code.';
 
     dialogSteps.style.display = 'none';
     codeSection.style.display = 'none';
     qrSection.style.display = 'block';
+
     dialogActionBtn.textContent = 'Close';
 
     const number = getNumber();
 
-    if(!number){
+    if (!number) {
       closeDialog();
       return;
     }
 
     qrContainer.innerHTML = '';
 
-    const canvas = document.createElement('canvas');
-    const context = canvas.getContext('2d');
+    const waLink =
+      'https://wa.me/' +
+      number +
+      '?text=Pair%20with%20ADM%20Link%20Hub';
 
-    const size = 220;
+    new QRCode(qrContainer, {
+      text: waLink,
+      width:220,
+      height:220,
+      colorDark:'#111827',
+      colorLight:'#ffffff',
+      correctLevel:QRCode.CorrectLevel.H
+    });
 
-    canvas.width = size;
-    canvas.height = size;
-
-    context.fillStyle = '#ffffff';
-    context.fillRect(0,0,size,size);
-
-    context.fillStyle = '#111111';
-    context.font = '600 13px Inter, sans-serif';
-    context.textAlign = 'center';
-
-    context.fillText(
-      'QR pairing',
-      size / 2,
-      size / 2 - 8
-    );
-
-    context.fillStyle = '#777777';
-    context.font = '11px Inter, sans-serif';
-
-    context.fillText(
-      '+' + number,
-      size / 2,
-      size / 2 + 14
-    );
-
-    qrContainer.appendChild(canvas);
-
-  }else{
+  } else {
 
     dialogTitle.textContent = 'Link your device';
-
-    dialogSub.textContent =
-      'Follow the steps below.';
+    dialogSub.textContent = 'Follow the steps below in WhatsApp.';
 
     dialogSteps.style.display = 'flex';
     codeSection.style.display = 'block';
@@ -1097,79 +1093,65 @@ function openDialog(code, isQR){
 
     dialogActionBtn.textContent = 'Continue';
 
-    pairCodeEl.textContent =
-      code || '----';
+    pairCodeEl.textContent = code || '----';
   }
 
   overlay.classList.add('open');
   document.body.style.overflow = 'hidden';
 }
 
-function closeDialog(){
+function closeDialog() {
   overlay.classList.remove('open');
   document.body.style.overflow = '';
 }
 
-function copyCode(){
+function copyCode() {
+  const code = pairCodeEl.textContent.trim();
 
-  const code =
-    pairCodeEl.textContent.trim();
-
-  if(!code || code === '----'){
+  if (!code || code === '----') {
     return;
   }
 
-  if(!navigator.clipboard){
-    return;
-  }
+  navigator.clipboard.writeText(code).then(() => {
 
-  navigator.clipboard.writeText(code)
-    .then(() => {
+    const copyButton =
+      document.querySelector('.copy');
 
-      const copyButton =
-        document.querySelector('.copy');
+    const original =
+      copyButton.textContent;
 
-      const original =
-        copyButton.textContent;
+    copyButton.textContent = 'COPIED';
 
-      copyButton.textContent = 'COPIED';
+    setTimeout(() => {
+      copyButton.textContent = original;
+    }, 1800);
 
-      setTimeout(() => {
-        copyButton.textContent = original;
-      },1800);
-
-    });
+  });
 }
 
-overlay.addEventListener(
-  'click',
-  function(event){
-    if(event.target === overlay){
-      closeDialog();
-    }
+overlay.addEventListener('click', event => {
+  if (event.target === overlay) {
+    closeDialog();
   }
-);
+});
 
 document
   .getElementById('number')
-  .addEventListener(
-    'keydown',
-    function(event){
-      if(event.key === 'Enter'){
-        doPair();
-      }
+  .addEventListener('keydown', event => {
+    if (event.key === 'Enter') {
+      doPair();
     }
-  );
+  });
 
-async function doPair(){
+async function doPair() {
 
   const number = getNumber();
 
-  if(!number || number.length < 10){
+  if (!number || number.length < 10) {
 
     setStatus(
       'error',
-      'Enter a valid phone number with country code.'
+      'Enter a valid WhatsApp number with country code.'
     );
 
     return;
@@ -1187,7 +1169,7 @@ async function doPair(){
     'Connecting to ADM Link Hub...'
   );
 
-  try{
+  try {
 
     const response = await fetch(
       '/pair?code=' +
@@ -1198,14 +1180,13 @@ async function doPair(){
       }
     );
 
-    if(!response.ok){
+    if (!response.ok) {
       throw new Error('Request failed');
     }
 
-    const data =
-      await response.json();
+    const data = await response.json();
 
-    if(data.success && data.code){
+    if (data.success && data.code) {
 
       currentCode = data.code;
 
@@ -1229,7 +1210,7 @@ async function doPair(){
         number
       );
 
-    }else{
+    } else {
 
       throw new Error(
         data.message ||
@@ -1237,28 +1218,33 @@ async function doPair(){
       );
     }
 
-  }catch(error){
+  } catch (error) {
 
     setStatus(
       'error',
-      'Unable to connect to the pairing server.'
+      error.message ===
+      'Failed to generate code'
+        ? error.message
+        : 'Unable to connect to the pairing server.'
     );
 
-  }finally{
+  } finally {
 
     setTimeout(() => {
 
       btn.disabled = false;
       qrBtn.disabled = false;
-      btn.textContent = 'Generate code';
 
-    },2500);
+      btn.textContent =
+        'Generate code';
+
+    }, 2500);
   }
 }
 
-async function startPairingDetection(number){
+async function startPairingDetection(number) {
 
-  if(pairingCheckTimer){
+  if (pairingCheckTimer) {
     clearInterval(
       pairingCheckTimer
     );
@@ -1268,65 +1254,73 @@ async function startPairingDetection(number){
     Date.now();
 
   pairingCheckTimer =
-    setInterval(async () => {
+    setInterval(
+      async () => {
 
-      if(
-        Date.now() - startedAt >
-        120000
-      ){
-
-        clearInterval(
-          pairingCheckTimer
-        );
-
-        pairingCheckTimer = null;
-
-        return;
-      }
-
-      try{
-
-        const response =
-          await fetch(
-            '/pair/status?number=' +
-            encodeURIComponent(number),
-            {
-              method:'GET',
-              cache:'no-store'
-            }
-          );
-
-        if(!response.ok){
-          return;
-        }
-
-        const data =
-          await response.json();
-
-        if(
-          data.success === true &&
-          (
-            data.connected === true ||
-            data.paired === true ||
-            data.status === 'connected' ||
-            data.status === 'paired'
-          )
-        ){
+        if (
+          Date.now() -
+          startedAt >
+          120000
+        ) {
 
           clearInterval(
             pairingCheckTimer
           );
 
-          pairingCheckTimer = null;
+          pairingCheckTimer =
+            null;
 
-          showSuccess(number);
+          return;
         }
 
-      }catch(error){}
-    },2000);
+        try {
+
+          const response =
+            await fetch(
+              '/pair/status?number=' +
+              encodeURIComponent(number),
+              {
+                method:'GET',
+                cache:'no-store'
+              }
+            );
+
+          if (!response.ok) {
+            return;
+          }
+
+          const data =
+            await response.json();
+
+          if (
+            data.success === true &&
+            (
+              data.connected === true ||
+              data.paired === true ||
+              data.status === 'connected' ||
+              data.status === 'paired'
+            )
+          ) {
+
+            clearInterval(
+              pairingCheckTimer
+            );
+
+            pairingCheckTimer =
+              null;
+
+            showSuccess(number);
+          }
+
+        } catch (error) {
+        }
+
+      },
+      2000
+    );
 }
 
-function showSuccess(number){
+function showSuccess(number) {
 
   closeDialog();
 
@@ -1335,11 +1329,9 @@ function showSuccess(number){
     'Device connected successfully.'
   );
 
-  document
-    .getElementById(
-      'success-number-display'
-    )
-    .textContent =
+  document.getElementById(
+    'success-number-display'
+  ).textContent =
     '+' + number;
 
   document
@@ -1349,19 +1341,19 @@ function showSuccess(number){
     .classList.add('show');
 }
 
-function showQR(){
+function showQR() {
 
   const number =
     getNumber();
 
-  if(
+  if (
     !number ||
     number.length < 10
-  ){
+  ) {
 
     setStatus(
       'error',
-      'Enter a valid phone number with country code.'
+      'Enter a valid WhatsApp number with country code.'
     );
 
     return;
