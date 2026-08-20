@@ -1,0 +1,7 @@
+.env
+node_modules/
+session/
+sessions/
+*.db
+*.sqlite
+*.sqlite3
