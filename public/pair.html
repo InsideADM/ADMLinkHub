@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#ffffff">
-<title>Pair Device — ADM Link Hub</title>
+<title>Pair — ADM Link Hub</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -18,11 +18,10 @@
   --surface:#fff;
   --surface-soft:#f7f7f8;
   --text:#111;
-  --muted:#6b6b70;
-  --border:#e6e6e8;
+  --muted:#6b7280;
+  --border:#e5e7eb;
   --blue:#2563eb;
-  --blue-soft:#eff6ff;
-  --blue-border:#dbeafe;
+  --blue-hover:#1d4ed8;
   --success:#16a34a;
   --danger:#dc2626;
 }
@@ -32,168 +31,189 @@ html[data-theme="dark"]{
   --surface:#000;
   --surface-soft:#111;
   --text:#f5f5f5;
-  --muted:#929296;
+  --muted:#8b8b93;
   --border:#262626;
-  --blue:#4f7cff;
-  --blue-soft:#101a32;
-  --blue-border:#1d315f;
+  --blue:#3b82f6;
+  --blue-hover:#60a5fa;
+  --success:#22c55e;
+  --danger:#ef4444;
 }
 
 *{
   box-sizing:border-box;
   margin:0;
   padding:0;
+  -webkit-tap-highlight-color:transparent;
 }
 
-html{
+html,
+body{
+  width:100%;
   min-height:100%;
   background:var(--bg);
-  color-scheme:light;
-}
-
-html[data-theme="dark"]{
-  color-scheme:dark;
 }
 
 body{
   min-height:100vh;
-  font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
   color:var(--text);
-  background:var(--bg);
+  font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
   display:flex;
-  align-items:center;
   justify-content:center;
-  padding:32px 20px;
+  padding:0 20px;
+  overflow-x:hidden;
   -webkit-font-smoothing:antialiased;
-  overscroll-behavior:none;
-  transition:background .2s,color .2s;
+  touch-action:pan-y;
 }
 
 button,
 input{
-  -webkit-tap-highlight-color:transparent;
+  font:inherit;
+}
+
+button{
+  touch-action:manipulation;
 }
 
 .page{
   width:100%;
-  max-width:430px;
+  max-width:560px;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
 }
 
-.toolbar{
-  width:100%;
+.nav{
+  height:72px;
   display:flex;
   align-items:center;
   justify-content:space-between;
-  margin-bottom:42px;
 }
 
-.brand-name{
+.brand{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  color:var(--text);
+  text-decoration:none;
   font-size:15px;
   font-weight:600;
-  letter-spacing:-.3px;
+  letter-spacing:-.2px;
+}
+
+.brand img{
+  width:28px;
+  height:28px;
+  border-radius:50%;
+  object-fit:cover;
 }
 
 .theme-toggle{
-  width:62px;
-  height:34px;
+  width:52px;
+  height:30px;
   border:1px solid var(--border);
   border-radius:999px;
-  background:var(--surface-soft);
   padding:3px;
+  background:var(--surface-soft);
   display:flex;
   align-items:center;
   cursor:pointer;
   position:relative;
-  transition:background .2s,border-color .2s;
+  transition:.2s ease;
 }
 
-.theme-track{
-  width:100%;
-  height:100%;
-  position:relative;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:0 7px;
-}
-
-.theme-icon{
-  width:14px;
-  height:14px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  z-index:1;
-  color:var(--muted);
-}
-
-.theme-icon svg{
-  width:14px;
-  height:14px;
-  display:block;
-  fill:currentColor;
-}
-
-.theme-knob{
-  position:absolute;
-  top:3px;
-  left:3px;
-  width:26px;
-  height:26px;
+.theme-thumb{
+  width:22px;
+  height:22px;
   border-radius:50%;
   background:var(--text);
   display:flex;
   align-items:center;
   justify-content:center;
-  transition:transform .2s ease,background .2s ease;
+  color:var(--bg);
+  position:relative;
   z-index:2;
+  transform:translateX(0);
+  transition:transform .2s ease;
 }
 
-.theme-knob svg{
+html[data-theme="dark"] .theme-thumb{
+  transform:translateX(22px);
+}
+
+.theme-thumb svg{
+  width:13px;
+  height:13px;
+  fill:currentColor;
+  stroke:none;
+}
+
+.theme-track-icon{
+  position:absolute;
   width:14px;
   height:14px;
-  fill:var(--bg);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:var(--muted);
 }
 
-html[data-theme="dark"] .theme-knob{
-  transform:translateX(28px);
+.theme-track-icon svg{
+  width:13px;
+  height:13px;
+  fill:currentColor;
+  stroke:none;
 }
 
-.header{
+.sun-track{
+  left:7px;
+}
+
+.moon-track{
+  right:7px;
+}
+
+main{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  padding:50px 0 70px;
+}
+
+.hero{
   text-align:center;
-  margin-bottom:28px;
+  margin-bottom:32px;
 }
 
-.header h1{
-  font-size:27px;
-  line-height:1.2;
+.hero h1{
+  font-size:34px;
+  line-height:1.12;
+  letter-spacing:-1.5px;
   font-weight:600;
-  letter-spacing:-.7px;
 }
 
-.header p{
-  margin-top:9px;
+.hero p{
+  max-width:430px;
+  margin:12px auto 0;
   color:var(--muted);
   font-size:14px;
-  line-height:1.5;
+  line-height:1.6;
 }
 
 .card{
+  width:100%;
   border:1px solid var(--border);
   border-radius:16px;
   background:var(--surface);
   padding:24px;
-  box-shadow:
-    0 1px 2px rgba(0,0,0,.03),
-    0 8px 30px rgba(0,0,0,.04);
 }
 
 .label{
   display:block;
+  margin-bottom:9px;
+  color:var(--text);
   font-size:13px;
   font-weight:500;
-  color:var(--text);
-  margin-bottom:8px;
 }
 
 .input-wrap{
@@ -206,7 +226,6 @@ html[data-theme="dark"] .theme-knob{
   top:50%;
   transform:translateY(-50%);
   color:var(--muted);
-  font-size:15px;
   pointer-events:none;
 }
 
@@ -215,12 +234,11 @@ input{
   height:48px;
   border:1px solid var(--border);
   border-radius:10px;
+  outline:none;
   background:var(--surface);
   color:var(--text);
-  padding:0 14px 0 30px;
-  font-family:inherit;
+  padding:0 14px 0 29px;
   font-size:14px;
-  outline:none;
   transition:border-color .15s,box-shadow .15s;
 }
 
@@ -230,14 +248,14 @@ input::placeholder{
 
 input:focus{
   border-color:var(--blue);
-  box-shadow:0 0 0 3px rgba(37,99,235,.1);
+  box-shadow:0 0 0 3px rgba(37,99,235,.12);
 }
 
 .hint{
   margin-top:8px;
   color:var(--muted);
   font-size:12px;
-  line-height:1.45;
+  line-height:1.5;
 }
 
 .buttons{
@@ -247,35 +265,31 @@ input:focus{
   margin-top:20px;
 }
 
-button{
-  font-family:inherit;
-}
-
-.action-btn{
+button.action{
   height:46px;
   border-radius:10px;
+  border:1px solid var(--border);
+  cursor:pointer;
   font-size:14px;
   font-weight:500;
-  cursor:pointer;
-  transition:background .15s,border-color .15s,transform .1s;
+  transition:.15s ease;
 }
 
-.action-btn:active{
+button.action:active{
   transform:scale(.98);
 }
 
 .primary{
-  border:1px solid var(--blue);
   background:var(--blue);
+  border-color:var(--blue)!important;
   color:#fff;
 }
 
 .primary:hover{
-  filter:brightness(.94);
+  background:var(--blue-hover);
 }
 
 .secondary{
-  border:1px solid var(--border);
   background:var(--surface);
   color:var(--text);
 }
@@ -285,8 +299,8 @@ button{
 }
 
 button:disabled{
+  opacity:.55;
   cursor:not-allowed;
-  opacity:.6;
 }
 
 .status{
@@ -303,28 +317,28 @@ button:disabled{
   align-items:center;
   gap:9px;
   color:var(--blue);
-  background:var(--blue-soft);
-  border:1px solid var(--blue-border);
+  background:rgba(37,99,235,.08);
+  border:1px solid rgba(37,99,235,.15);
 }
 
 .status.success{
   display:block;
   color:var(--success);
-  background:rgba(22,163,74,.08);
-  border:1px solid rgba(22,163,74,.18);
+  background:rgba(34,197,94,.08);
+  border:1px solid rgba(34,197,94,.15);
 }
 
 .status.error{
   display:block;
   color:var(--danger);
-  background:rgba(220,38,38,.08);
-  border:1px solid rgba(220,38,38,.18);
+  background:rgba(239,68,68,.08);
+  border:1px solid rgba(239,68,68,.15);
 }
 
 .spinner{
   width:14px;
   height:14px;
-  border:2px solid rgba(37,99,235,.2);
+  border:2px solid rgba(37,99,235,.25);
   border-top-color:var(--blue);
   border-radius:50%;
   animation:spin .7s linear infinite;
@@ -337,6 +351,56 @@ button:disabled{
   }
 }
 
+.footer{
+  border-top:1px solid var(--border);
+  padding:24px 0 28px;
+  text-align:center;
+}
+
+.footer-brand{
+  color:var(--text);
+  font-size:13px;
+  font-weight:600;
+}
+
+.footer-copy{
+  margin-top:7px;
+  color:var(--muted);
+  font-size:11px;
+}
+
+.socials{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  margin-top:16px;
+}
+
+.social{
+  width:36px;
+  height:36px;
+  border:1px solid var(--border);
+  border-radius:10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:var(--text);
+  text-decoration:none;
+  transition:.15s ease;
+}
+
+.social:hover{
+  background:var(--surface-soft);
+}
+
+.social svg{
+  width:17px;
+  height:17px;
+  fill:currentColor;
+  stroke:none;
+}
+
 .overlay{
   position:fixed;
   inset:0;
@@ -345,12 +409,12 @@ button:disabled{
   align-items:center;
   justify-content:center;
   padding:20px;
-  background:rgba(255,255,255,.88);
-  backdrop-filter:blur(8px);
+  background:rgba(255,255,255,.82);
+  backdrop-filter:blur(12px);
 }
 
 html[data-theme="dark"] .overlay{
-  background:rgba(0,0,0,.88);
+  background:rgba(0,0,0,.82);
 }
 
 .overlay.open{
@@ -360,18 +424,18 @@ html[data-theme="dark"] .overlay{
 .dialog{
   width:100%;
   max-width:400px;
+  max-height:calc(100vh - 40px);
+  overflow:auto;
   background:var(--surface);
   border:1px solid var(--border);
   border-radius:16px;
-  box-shadow:0 20px 60px rgba(0,0,0,.18);
-  overflow:hidden;
   animation:dialogIn .18s ease-out;
 }
 
 @keyframes dialogIn{
   from{
     opacity:0;
-    transform:translateY(8px) scale(.98);
+    transform:translateY(7px) scale(.985);
   }
   to{
     opacity:1;
@@ -389,15 +453,15 @@ html[data-theme="dark"] .overlay{
 }
 
 .dialog-title{
+  color:var(--text);
   font-size:16px;
   font-weight:600;
-  letter-spacing:-.2px;
 }
 
 .dialog-subtitle{
   margin-top:5px;
-  font-size:12px;
   color:var(--muted);
+  font-size:12px;
   line-height:1.45;
 }
 
@@ -407,7 +471,7 @@ html[data-theme="dark"] .overlay{
   border:0;
   background:transparent;
   color:var(--muted);
-  border-radius:50%;
+  border-radius:8px;
   display:flex;
   align-items:center;
   justify-content:center;
@@ -421,9 +485,10 @@ html[data-theme="dark"] .overlay{
 }
 
 .close svg{
-  width:19px;
-  height:19px;
+  width:18px;
+  height:18px;
   fill:currentColor;
+  stroke:none;
 }
 
 .dialog-body{
@@ -447,9 +512,9 @@ html[data-theme="dark"] .overlay{
   width:26px;
   height:26px;
   border-radius:50%;
-  background:var(--blue-soft);
+  background:rgba(37,99,235,.08);
   color:var(--blue);
-  border:1px solid var(--blue-border);
+  border:1px solid rgba(37,99,235,.15);
   display:flex;
   align-items:center;
   justify-content:center;
@@ -471,8 +536,8 @@ html[data-theme="dark"] .overlay{
 }
 
 .code-label{
-  font-size:11px;
   color:var(--muted);
+  font-size:11px;
   font-weight:500;
   margin-bottom:8px;
   text-transform:uppercase;
@@ -481,19 +546,19 @@ html[data-theme="dark"] .overlay{
 
 .code-box{
   position:relative;
-  border:1px solid var(--blue-border);
-  background:var(--blue-soft);
+  border:1px solid var(--border);
+  background:var(--surface-soft);
   border-radius:12px;
   padding:20px 12px 15px;
   text-align:center;
 }
 
 .code{
+  color:var(--blue);
   font-size:27px;
   line-height:1;
   font-weight:600;
   letter-spacing:5px;
-  color:var(--blue);
   font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
 }
 
@@ -504,16 +569,12 @@ html[data-theme="dark"] .overlay{
   height:28px;
   padding:0 8px;
   border-radius:6px;
-  border:1px solid var(--blue-border);
+  border:1px solid var(--border);
   background:var(--surface);
   color:var(--blue);
   font-size:10px;
   font-weight:600;
   cursor:pointer;
-}
-
-.copy:hover{
-  background:var(--blue-soft);
 }
 
 .timer{
@@ -534,7 +595,7 @@ html[data-theme="dark"] .overlay{
   display:flex;
   align-items:center;
   justify-content:center;
-  padding:10px;
+  padding:8px 0;
 }
 
 .qr-container canvas,
@@ -545,7 +606,7 @@ html[data-theme="dark"] .overlay{
   padding:10px;
   background:#fff;
   border:1px solid var(--border);
-  border-radius:10px;
+  border-radius:12px;
 }
 
 .qr-instruction{
@@ -553,7 +614,7 @@ html[data-theme="dark"] .overlay{
   color:var(--muted);
   font-size:12px;
   line-height:1.5;
-  margin-top:5px;
+  margin-top:7px;
 }
 
 .dialog-footer{
@@ -590,16 +651,23 @@ html[data-theme="dark"] .overlay{
   height:56px;
   margin:0 auto 20px;
   border-radius:50%;
-  background:rgba(22,163,74,.08);
-  border:1px solid rgba(22,163,74,.2);
+  background:rgba(34,197,94,.08);
+  border:1px solid rgba(34,197,94,.18);
   color:var(--success);
   display:flex;
   align-items:center;
   justify-content:center;
-  font-size:25px;
+}
+
+.success-icon svg{
+  width:25px;
+  height:25px;
+  fill:currentColor;
+  stroke:none;
 }
 
 .success-title{
+  color:var(--text);
   font-size:28px;
   line-height:1.2;
   font-weight:600;
@@ -619,8 +687,8 @@ html[data-theme="dark"] .overlay{
   align-items:center;
   gap:8px;
   padding:8px 13px;
-  border:1px solid rgba(22,163,74,.2);
-  background:rgba(22,163,74,.08);
+  border:1px solid rgba(34,197,94,.18);
+  background:rgba(34,197,94,.08);
   border-radius:8px;
   color:var(--success);
   font-size:13px;
@@ -653,9 +721,9 @@ html[data-theme="dark"] .overlay{
   width:25px;
   height:25px;
   border-radius:50%;
-  background:var(--blue-soft);
+  background:rgba(37,99,235,.08);
   color:var(--blue);
-  border:1px solid var(--blue-border);
+  border:1px solid rgba(37,99,235,.15);
   display:flex;
   align-items:center;
   justify-content:center;
@@ -677,8 +745,8 @@ html[data-theme="dark"] .overlay{
 }
 
 .success-pair-again{
-  font-size:13px;
   color:var(--muted);
+  font-size:13px;
 }
 
 .success-pair-again a{
@@ -686,34 +754,29 @@ html[data-theme="dark"] .overlay{
   text-decoration:none;
 }
 
-.success-pair-again a:hover{
-  text-decoration:underline;
-}
-
 @media(max-width:480px){
   body{
-    padding:24px 16px;
+    padding:0 16px;
   }
 
-  .toolbar{
-    margin-bottom:36px;
+  .nav{
+    height:64px;
   }
 
-  .card{
-    padding:20px;
+  main{
+    padding:38px 0 55px;
   }
 
-  .header h1{
-    font-size:25px;
+  .hero h1{
+    font-size:30px;
   }
 
   .buttons{
     grid-template-columns:1fr;
   }
 
-  .dialog{
-    max-height:calc(100vh - 32px);
-    overflow-y:auto;
+  .card{
+    padding:20px;
   }
 }
 </style>
@@ -721,109 +784,138 @@ html[data-theme="dark"] .overlay{
 
 <body>
 
-<main class="page">
+<div class="page">
 
-  <div class="toolbar">
+  <nav class="nav">
+    <a class="brand" href="/">
+      <img src="https://raw.githubusercontent.com/InsideADM/InsideADM/main/assets/adm-logo.png" alt="ADM">
+      <span>ADM Link Hub</span>
+    </a>
 
-    <div class="brand-name">
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+      <span class="theme-track-icon sun-track">
+        <svg viewBox="0 0 24 24">
+          <path d="M12 3V5M12 19V21M3 12H5M19 12H21M5.64 5.64L7.05 7.05M16.95 16.95L18.36 18.36M5.64 18.36L7.05 16.95M16.95 7.05L18.36 5.64M12 7A5 5 0 1 0 12 17A5 5 0 0 0 12 7Z"/>
+        </svg>
+      </span>
+
+      <span class="theme-track-icon moon-track">
+        <svg viewBox="0 0 24 24">
+          <path d="M20.7 14.1A8.5 8.5 0 0 1 9.9 3.3A8.5 8.5 0 1 0 20.7 14.1Z"/>
+        </svg>
+      </span>
+
+      <span class="theme-thumb">
+        <svg id="themeIcon" viewBox="0 0 24 24"></svg>
+      </span>
+    </button>
+  </nav>
+
+  <main>
+
+    <section class="hero">
+      <h1>Pair your device</h1>
+      <p>Connect your WhatsApp account to ADM Link Hub.</p>
+    </section>
+
+    <section class="card">
+
+      <label class="label" for="number">
+        WhatsApp number
+      </label>
+
+      <div class="input-wrap">
+        <span class="input-prefix">+</span>
+
+        <input
+          type="tel"
+          id="number"
+          placeholder="256740632497"
+          autocomplete="off"
+          inputmode="numeric"
+        >
+      </div>
+
+      <p class="hint">
+        Enter your number with the country code, without the + sign.
+      </p>
+
+      <div class="buttons">
+
+        <button
+          class="action primary"
+          id="pairBtn"
+          onclick="doPair()"
+        >
+          Generate code
+        </button>
+
+        <button
+          class="action secondary"
+          id="qrBtn"
+          onclick="showQR()"
+        >
+          Scan QR
+        </button>
+
+      </div>
+
+      <div class="status" id="statusBar">
+        <div class="spinner" id="statusSpinner"></div>
+        <span id="statusText"></span>
+      </div>
+
+    </section>
+
+  </main>
+
+  <footer class="footer">
+
+    <div class="footer-brand">
       ADM Link Hub
     </div>
 
-    <button
-      class="theme-toggle"
-      id="themeToggle"
-      type="button"
-      aria-label="Toggle dark theme"
-      aria-pressed="false"
-    >
-      <div class="theme-track">
+    <div class="footer-copy">
+      © 2026 InsideADM
+    </div>
 
-        <span class="theme-icon">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M12 4V2M12 22v-2M4 12H2M22 12h-2M5.64 5.64 4.22 4.22M19.78 19.78l-1.42-1.42M5.64 18.36l-1.42 1.42M19.78 4.22l-1.42 1.42M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10Z"/>
-          </svg>
-        </span>
+    <div class="socials">
 
-        <span class="theme-icon">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M21 15.8A8.5 8.5 0 0 1 8.2 3 8.5 8.5 0 1 0 21 15.8Z"/>
-          </svg>
-        </span>
-
-        <span class="theme-knob" id="themeKnob">
-          <svg id="themeKnobIcon" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M12 4V2M12 22v-2M4 12H2M22 12h-2M5.64 5.64 4.22 4.22M19.78 19.78l-1.42-1.42M5.64 18.36l-1.42 1.42M19.78 4.22l-1.42 1.42M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10Z"/>
-          </svg>
-        </span>
-
-      </div>
-    </button>
-
-  </div>
-
-  <header class="header">
-    <h1>Pair your device</h1>
-    <p>Link your WhatsApp account securely with ADM Link Hub.</p>
-  </header>
-
-  <section class="card">
-
-    <label class="label" for="number">
-      WhatsApp number
-    </label>
-
-    <div class="input-wrap">
-
-      <span class="input-prefix">+</span>
-
-      <input
-        type="tel"
-        id="number"
-        placeholder="256740632497"
-        autocomplete="off"
-        inputmode="numeric"
+      <a
+        class="social"
+        href="https://t.me/InsideADM"
+        aria-label="Telegram"
       >
+        <svg viewBox="0 0 24 24">
+          <path d="M21.4 4.6L18.2 19.7C18 20.8 17.3 21.1 16.3 20.5L11 16.6L8.4 19.1C8.1 19.4 7.8 19.7 7.2 19.7L7.6 14.2L17.6 5.2C18 4.8 17.5 4.6 17 4.9L4.6 12.7L-.7 11C-1.8 10.7-1.8 10 4.8 7.4L19.7 1.7C20.7 1.3 21.6 1.9 21.4 4.6Z" transform="translate(1 1) scale(.92)"/>
+        </svg>
+      </a>
+
+      <a
+        class="social"
+        href="https://www.youtube.com/@InsideADM"
+        aria-label="YouTube"
+      >
+        <svg viewBox="0 0 24 24">
+          <path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8ZM9.6 15.9V8.1l6.5 3.9-6.5 3.9Z"/>
+        </svg>
+      </a>
+
+      <a
+        class="social"
+        href="https://www.facebook.com/InsideADM"
+        aria-label="Facebook"
+      >
+        <svg viewBox="0 0 24 24">
+          <path d="M14 8h3V4h-3c-3.3 0-5 1.9-5 5v3H6v4h3v4h4v-4h3.5l.5-4H13V9c0-.7.3-1 1-1Z"/>
+        </svg>
+      </a>
 
     </div>
 
-    <p class="hint">
-      Enter your number with the country code, without the + sign.
-    </p>
+  </footer>
 
-    <div class="buttons">
-
-      <button
-        class="action-btn primary"
-        id="pairBtn"
-        onclick="doPair()"
-      >
-        Generate code
-      </button>
-
-      <button
-        class="action-btn secondary"
-        id="qrBtn"
-        onclick="showQR()"
-      >
-        Show QR
-      </button>
-
-    </div>
-
-    <div class="status" id="statusBar">
-
-      <div
-        class="spinner"
-        id="statusSpinner"
-      ></div>
-
-      <span id="statusText"></span>
-
-    </div>
-
-  </section>
-
-</main>
+</div>
 
 <div class="overlay" id="overlay">
 
@@ -832,28 +924,18 @@ html[data-theme="dark"] .overlay{
     <div class="dialog-header">
 
       <div>
-        <div
-          class="dialog-title"
-          id="dialogTitle"
-        >
+        <div class="dialog-title" id="dialogTitle">
           Link your device
         </div>
 
-        <div
-          class="dialog-subtitle"
-          id="dialogSub"
-        >
+        <div class="dialog-subtitle" id="dialogSub">
           Follow the steps below in WhatsApp.
         </div>
       </div>
 
-      <button
-        class="close"
-        onclick="closeDialog()"
-        aria-label="Close"
-      >
+      <button class="close" onclick="closeDialog()" aria-label="Close">
         <svg viewBox="0 0 24 24">
-          <path d="M18.3 5.7a1 1 0 0 0-1.4 0L12 10.6 7.1 5.7a1 1 0 0 0-1.4 1.4l4.9 4.9-4.9 4.9a1 1 0 1 0 1.4 1.4l4.9-4.9 4.9 4.9a1 1 0 0 0 1.4-1.4L13.4 12l4.9-4.9a1 1 0 0 0 0-1.4Z"/>
+          <path d="M6.7 5.3L12 10.6l5.3-5.3 1.4 1.4-5.3 5.3 5.3 5.3-1.4 1.4-5.3-5.3-5.3 5.3-1.4-1.4 5.3-5.3-5.3-5.3 1.4-1.4Z"/>
         </svg>
       </button>
 
@@ -861,10 +943,7 @@ html[data-theme="dark"] .overlay{
 
     <div class="dialog-body">
 
-      <div
-        class="steps"
-        id="dialogSteps"
-      >
+      <div class="steps" id="dialogSteps">
 
         <div class="step">
           <div class="step-number">1</div>
@@ -876,7 +955,7 @@ html[data-theme="dark"] .overlay{
         <div class="step">
           <div class="step-number">2</div>
           <div class="step-text">
-            Open <strong>Linked Devices</strong> from the WhatsApp menu.
+            Open <strong>Linked Devices</strong>.
           </div>
         </div>
 
@@ -905,45 +984,32 @@ html[data-theme="dark"] .overlay{
 
         <div class="code-box">
 
-          <button
-            class="copy"
-            onclick="copyCode()"
-          >
+          <button class="copy" onclick="copyCode()">
             COPY
           </button>
 
-          <div
-            class="code"
-            id="pairCode"
-          >
+          <div class="code" id="pairCode">
             ----
           </div>
 
           <div class="timer">
-            Code is valid for approximately
-            <span>60 seconds</span>.
+            Code is valid for approximately <span>60 seconds</span>.
           </div>
 
         </div>
 
       </div>
 
-      <div
-        class="qr-section"
-        id="qrSection"
-      >
+      <div class="qr-section" id="qrSection">
 
         <div class="code-label">
           QR code
         </div>
 
-        <div
-          class="qr-container"
-          id="qrContainer"
-        ></div>
+        <div class="qr-container" id="qrContainer"></div>
 
         <div class="qr-instruction">
-          Open WhatsApp and use Linked Devices to scan the QR code.
+          Scan this code with WhatsApp to continue.
         </div>
 
       </div>
@@ -953,7 +1019,7 @@ html[data-theme="dark"] .overlay{
     <div class="dialog-footer">
 
       <button
-        class="action-btn primary dialog-action"
+        class="action primary dialog-action"
         id="dialogActionBtn"
         onclick="closeDialog()"
       >
@@ -966,15 +1032,14 @@ html[data-theme="dark"] .overlay{
 
 </div>
 
-<div
-  class="success-screen"
-  id="success-screen"
->
+<div class="success-screen" id="success-screen">
 
   <div class="success-card">
 
     <div class="success-icon">
-      ✓
+      <svg viewBox="0 0 24 24">
+        <path d="M9.2 16.6L4.6 12l1.4-1.4 3.2 3.2 8.8-8.8 1.4 1.4-10.2 10.2Z"/>
+      </svg>
     </div>
 
     <h2 class="success-title">
@@ -986,67 +1051,40 @@ html[data-theme="dark"] .overlay{
     </p>
 
     <div class="success-number">
-
       <span>✓</span>
-
       <span id="success-number-display">
         +000000000000
       </span>
-
     </div>
 
     <div class="success-steps">
 
       <div class="success-step">
-
-        <div class="ss-num">
-          1
-        </div>
-
+        <div class="ss-num">1</div>
         <div class="ss-text">
-          Your WhatsApp session is now
-          <strong>linked</strong>.
+          Your WhatsApp session is now <strong>linked</strong>.
         </div>
-
       </div>
 
       <div class="success-step">
-
-        <div class="ss-num">
-          2
-        </div>
-
+        <div class="ss-num">2</div>
         <div class="ss-text">
-          The session is
-          <strong>saved</strong>
-          and can survive bot restarts.
+          The session is <strong>saved</strong> and can survive bot restarts.
         </div>
-
       </div>
 
       <div class="success-step">
-
-        <div class="ss-num">
-          3
-        </div>
-
+        <div class="ss-num">3</div>
         <div class="ss-text">
-          WhatsApp may send a
-          <strong>confirmation notification</strong>.
+          WhatsApp may send a <strong>confirmation notification</strong>.
         </div>
-
       </div>
 
     </div>
 
     <div class="success-pair-again">
-
       Need to pair another number?
-
-      <a href="/pair">
-        Pair again
-      </a>
-
+      <a href="/pair.html">Pair again</a>
     </div>
 
   </div>
@@ -1054,679 +1092,507 @@ html[data-theme="dark"] .overlay{
 </div>
 
 <script>
-const btn =
-    document.getElementById('pairBtn');
-
-const qrBtn =
-    document.getElementById('qrBtn');
-
-const bar =
-    document.getElementById('statusBar');
-
-const barTxt =
-    document.getElementById('statusText');
-
-const spin =
-    document.getElementById('statusSpinner');
-
-const overlay =
-    document.getElementById('overlay');
-
-const dialogTitle =
-    document.getElementById('dialogTitle');
-
-const dialogSub =
-    document.getElementById('dialogSub');
-
-const dialogSteps =
-    document.getElementById('dialogSteps');
-
-const codeSection =
-    document.getElementById('codeSection');
-
-const qrSection =
-    document.getElementById('qrSection');
-
-const qrContainer =
-    document.getElementById('qrContainer');
-
-const pairCodeEl =
-    document.getElementById('pairCode');
-
-const dialogActionBtn =
-    document.getElementById('dialogActionBtn');
+const html = document.documentElement;
 
 const themeToggle =
-    document.getElementById('themeToggle');
+  document.getElementById('themeToggle');
 
-const themeKnobIcon =
-    document.getElementById('themeKnobIcon');
+const themeIcon =
+  document.getElementById('themeIcon');
+
+const sunIcon =
+  '<path d="M12 3V5M12 19V21M3 12H5M19 12H21M5.64 5.64L7.05 7.05M16.95 16.95L18.36 18.36M5.64 18.36L7.05 16.95M16.95 7.05L18.36 5.64M12 7A5 5 0 1 0 12 17A5 5 0 0 0 12 7Z"/>' +
+  '<circle cx="12" cy="12" r="3"/>';
+
+const moonIcon =
+  '<path d="M20.7 14.1A8.5 8.5 0 0 1 9.9 3.3A8.5 8.5 0 1 0 20.7 14.1Z"/>';
+
+function updateThemeIcon() {
+  const dark =
+    html.getAttribute('data-theme') === 'dark';
+
+  themeIcon.innerHTML =
+    dark ? moonIcon : sunIcon;
+}
+
+const savedTheme =
+  localStorage.getItem('adm-theme');
+
+if (savedTheme === 'dark') {
+  html.setAttribute('data-theme', 'dark');
+}
+
+updateThemeIcon();
+
+themeToggle.addEventListener(
+  'click',
+  function() {
+    const dark =
+      html.getAttribute('data-theme') === 'dark';
+
+    const next =
+      dark ? 'light' : 'dark';
+
+    html.setAttribute(
+      'data-theme',
+      next
+    );
+
+    localStorage.setItem(
+      'adm-theme',
+      next
+    );
+
+    updateThemeIcon();
+
+    document
+      .querySelector('meta[name="theme-color"]')
+      .setAttribute(
+        'content',
+        next === 'dark' ? '#000000' : '#ffffff'
+      );
+  }
+);
+
+const btn =
+  document.getElementById('pairBtn');
+
+const qrBtn =
+  document.getElementById('qrBtn');
+
+const bar =
+  document.getElementById('statusBar');
+
+const barTxt =
+  document.getElementById('statusText');
+
+const spin =
+  document.getElementById('statusSpinner');
+
+const overlay =
+  document.getElementById('overlay');
+
+const dialogTitle =
+  document.getElementById('dialogTitle');
+
+const dialogSub =
+  document.getElementById('dialogSub');
+
+const dialogSteps =
+  document.getElementById('dialogSteps');
+
+const codeSection =
+  document.getElementById('codeSection');
+
+const qrSection =
+  document.getElementById('qrSection');
+
+const qrContainer =
+  document.getElementById('qrContainer');
+
+const pairCodeEl =
+  document.getElementById('pairCode');
+
+const dialogActionBtn =
+  document.getElementById('dialogActionBtn');
 
 let currentCode = null;
 let pairingNumber = null;
 let pairingCheckTimer = null;
 
-function applyTheme(theme) {
-    const isDark =
-        theme === 'dark';
+function setStatus(type, message) {
+  bar.className =
+    'status ' + type;
 
-    document.documentElement
-        .setAttribute(
-            'data-theme',
-            isDark
-                ? 'dark'
-                : 'light'
-        );
+  barTxt.textContent =
+    message;
 
-    themeToggle.setAttribute(
-        'aria-pressed',
-        String(isDark)
-    );
-
-    themeKnobIcon.innerHTML =
-        isDark
-            ? `
-                <path d="M21 15.8A8.5 8.5 0 0 1 8.2 3 8.5 8.5 0 1 0 21 15.8Z"/>
-              `
-            : `
-                <path d="M12 4V2M12 22v-2M4 12H2M22 12h-2M5.64 5.64 4.22 4.22M19.78 19.78l-1.42-1.42M5.64 18.36l-1.42 1.42M19.78 4.22l-1.42 1.42M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10Z"/>
-              `;
-
-    localStorage.setItem(
-        'adm-theme',
-        isDark
-            ? 'dark'
-            : 'light'
-    );
-}
-
-function initializeTheme() {
-    const saved =
-        localStorage.getItem(
-            'adm-theme'
-        );
-
-    if (saved === 'dark' ||
-        saved === 'light') {
-        applyTheme(saved);
-        return;
-    }
-
-    applyTheme('light');
-}
-
-themeToggle.addEventListener(
-    'click',
-    () => {
-        const dark =
-            document.documentElement
-                .getAttribute(
-                    'data-theme'
-                ) === 'dark';
-
-        applyTheme(
-            dark
-                ? 'light'
-                : 'dark'
-        );
-    }
-);
-
-initializeTheme();
-
-function setStatus(
-    type,
-    message
-) {
-    bar.className =
-        'status ' + type;
-
-    barTxt.textContent =
-        message;
-
-    spin.style.display =
-        type === 'loading'
-            ? 'block'
-            : 'none';
+  spin.style.display =
+    type === 'loading'
+      ? 'block'
+      : 'none';
 }
 
 function getNumber() {
-    return document
-        .getElementById('number')
-        .value
-        .trim()
-        .replace(
-            /[^0-9]/g,
-            ''
-        );
+  return document
+    .getElementById('number')
+    .value
+    .trim()
+    .replace(/[^0-9]/g, '');
 }
 
-function openDialog(
-    code,
-    isQR
-) {
-    if (isQR) {
+function openDialog(code, isQR) {
 
-        dialogTitle.textContent =
-            'Scan QR code';
+  if (isQR) {
 
-        dialogSub.textContent =
-            'Use WhatsApp on your phone to scan this code.';
+    dialogTitle.textContent =
+      'Scan QR code';
 
-        dialogSteps.style.display =
-            'none';
+    dialogSub.textContent =
+      'Use WhatsApp on your phone to scan this code.';
 
-        codeSection.style.display =
-            'none';
+    dialogSteps.style.display =
+      'none';
 
-        qrSection.style.display =
-            'block';
+    codeSection.style.display =
+      'none';
 
-        dialogActionBtn.textContent =
-            'Close';
+    qrSection.style.display =
+      'block';
 
-        const number =
-            getNumber();
+    dialogActionBtn.textContent =
+      'Close';
 
-        if (!number) {
-            closeDialog();
-            return;
-        }
+    const number =
+      getNumber();
 
-        qrContainer.innerHTML =
-            '';
-
-        const waLink =
-            'https://wa.me/' +
-            number +
-            '?text=Pair%20with%20ADM%20Link%20Hub';
-
-        new QRCode(
-            qrContainer,
-            {
-                text: waLink,
-                width: 220,
-                height: 220,
-                colorDark: '#111111',
-                colorLight: '#ffffff',
-                correctLevel:
-                    QRCode.CorrectLevel.H
-            }
-        );
-
-    } else {
-
-        dialogTitle.textContent =
-            'Link your device';
-
-        dialogSub.textContent =
-            'Follow the steps below in WhatsApp.';
-
-        dialogSteps.style.display =
-            'flex';
-
-        codeSection.style.display =
-            'block';
-
-        qrSection.style.display =
-            'none';
-
-        dialogActionBtn.textContent =
-            'Continue';
-
-        pairCodeEl.textContent =
-            code || '----';
+    if (!number) {
+      closeDialog();
+      return;
     }
 
-    overlay.classList.add(
-        'open'
-    );
+    qrContainer.innerHTML = '';
 
-    document.body.style.overflow =
-        'hidden';
+    const waLink =
+      'https://wa.me/' +
+      number +
+      '?text=Pair%20with%20ADM%20Link%20Hub';
+
+    new QRCode(qrContainer, {
+      text: waLink,
+      width:220,
+      height:220,
+      colorDark:'#111111',
+      colorLight:'#ffffff',
+      correctLevel:QRCode.CorrectLevel.H
+    });
+
+  } else {
+
+    dialogTitle.textContent =
+      'Link your device';
+
+    dialogSub.textContent =
+      'Follow the steps below in WhatsApp.';
+
+    dialogSteps.style.display =
+      'flex';
+
+    codeSection.style.display =
+      'block';
+
+    qrSection.style.display =
+      'none';
+
+    dialogActionBtn.textContent =
+      'Continue';
+
+    pairCodeEl.textContent =
+      code || '----';
+  }
+
+  overlay.classList.add('open');
+
+  document.body.style.overflow =
+    'hidden';
 }
 
 function closeDialog() {
-    overlay.classList.remove(
-        'open'
-    );
+  overlay.classList.remove('open');
 
-    document.body.style.overflow =
-        '';
+  document.body.style.overflow =
+    '';
 }
 
 function copyCode() {
-    const code =
-        pairCodeEl.textContent
-            .trim();
 
-    if (
-        !code ||
-        code === '----'
-    ) {
-        return;
-    }
+  const code =
+    pairCodeEl.textContent.trim();
 
-    navigator.clipboard
-        .writeText(code)
-        .then(() => {
+  if (!code || code === '----') {
+    return;
+  }
 
-            const copyButton =
-                document.querySelector(
-                    '.copy'
-                );
+  navigator.clipboard
+    .writeText(code)
+    .then(() => {
 
-            const original =
-                copyButton.textContent;
+      const copyButton =
+        document.querySelector('.copy');
 
-            copyButton.textContent =
-                'COPIED';
+      const original =
+        copyButton.textContent;
 
-            setTimeout(() => {
-                copyButton.textContent =
-                    original;
-            }, 1800);
+      copyButton.textContent =
+        'COPIED';
 
-        })
-        .catch(() => {
-            setStatus(
-                'error',
-                'Unable to copy the code.'
-            );
-        });
+      setTimeout(() => {
+        copyButton.textContent =
+          original;
+      }, 1800);
+
+    })
+    .catch(() => {});
 }
 
 overlay.addEventListener(
-    'click',
-    event => {
-        if (
-            event.target ===
-            overlay
-        ) {
-            closeDialog();
-        }
+  'click',
+  function(event) {
+    if (event.target === overlay) {
+      closeDialog();
     }
+  }
 );
 
 document
-    .getElementById('number')
-    .addEventListener(
-        'keydown',
-        event => {
-            if (
-                event.key ===
-                'Enter'
-            ) {
-                doPair();
-            }
-        }
-    );
+  .getElementById('number')
+  .addEventListener(
+    'keydown',
+    function(event) {
+      if (event.key === 'Enter') {
+        doPair();
+      }
+    }
+  );
 
 async function doPair() {
-    const number =
-        getNumber();
 
-    if (
-        !number ||
-        number.length < 10
-    ) {
-        setStatus(
-            'error',
-            'Enter a valid WhatsApp number with country code.'
-        );
+  const number =
+    getNumber();
 
-        return;
-    }
-
-    pairingNumber =
-        number;
-
-    btn.disabled =
-        true;
-
-    qrBtn.disabled =
-        true;
-
-    btn.textContent =
-        'Generating...';
+  if (!number || number.length < 10) {
 
     setStatus(
-        'loading',
-        'Connecting to ADM Link Hub...'
+      'error',
+      'Enter a valid WhatsApp number with country code.'
     );
 
-    try {
+    return;
+  }
 
-        const response =
-            await fetch(
-                '/pair',
-                {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type':
-                            'application/json'
-                    },
-                    body:
-                        JSON.stringify({
-                            number
-                        }),
-                    cache:
-                        'no-store'
-                }
-            );
+  pairingNumber =
+    number;
 
-        let data;
+  btn.disabled =
+    true;
 
-        try {
-            data =
-                await response.json();
-        } catch {
-            throw new Error(
-                'Invalid response from pairing server.'
-            );
+  qrBtn.disabled =
+    true;
+
+  btn.textContent =
+    'Generating...';
+
+  setStatus(
+    'loading',
+    'Connecting to ADM Link Hub...'
+  );
+
+  try {
+
+    const response =
+      await fetch(
+        '/pair?code=' +
+        encodeURIComponent(number),
+        {
+          method:'GET',
+          cache:'no-store'
         }
+      );
+
+    const data =
+      await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.message ||
+        data.error ||
+        'Request failed'
+      );
+    }
+
+    if (
+      data.success &&
+      data.code
+    ) {
+
+      currentCode =
+        data.code;
+
+      pairCodeEl.textContent =
+        data.code;
+
+      setStatus(
+        'success',
+        'Pairing code generated.'
+      );
+
+      openDialog(
+        data.code,
+        false
+      );
+
+      startPairingDetection(
+        number
+      );
+
+    } else {
+
+      throw new Error(
+        data.message ||
+        data.error ||
+        'Failed to generate code'
+      );
+    }
+
+  } catch (error) {
+
+    setStatus(
+      'error',
+      error.message ||
+      'Unable to connect to the pairing server.'
+    );
+
+  } finally {
+
+    setTimeout(() => {
+
+      btn.disabled =
+        false;
+
+      qrBtn.disabled =
+        false;
+
+      btn.textContent =
+        'Generate code';
+
+    }, 2500);
+  }
+}
+
+async function startPairingDetection(number) {
+
+  if (pairingCheckTimer) {
+
+    clearInterval(
+      pairingCheckTimer
+    );
+  }
+
+  const startedAt =
+    Date.now();
+
+  pairingCheckTimer =
+    setInterval(
+      async () => {
 
         if (
-            !response.ok ||
-            !data.success
+          Date.now() -
+          startedAt >
+          120000
         ) {
-            throw new Error(
-                data.error ||
-                'Failed to generate pairing code'
-            );
+
+          clearInterval(
+            pairingCheckTimer
+          );
+
+          pairingCheckTimer =
+            null;
+
+          return;
         }
-
-        if (!data.code) {
-
-            setStatus(
-                'loading',
-                'Pairing session created. Waiting for code...'
-            );
-
-            await waitForCode(
-                number
-            );
-
-        } else {
-
-            currentCode =
-                data.code;
-
-            pairCodeEl.textContent =
-                data.code;
-
-            setStatus(
-                'success',
-                'Pairing code generated.'
-            );
-
-            openDialog(
-                data.code,
-                false
-            );
-        }
-
-        startPairingDetection(
-            number
-        );
-
-    } catch (error) {
-
-        setStatus(
-            'error',
-            error.message ||
-            'Unable to connect to the pairing server.'
-        );
-
-    } finally {
-
-        setTimeout(() => {
-
-            btn.disabled =
-                false;
-
-            qrBtn.disabled =
-                false;
-
-            btn.textContent =
-                'Generate code';
-
-        }, 2500);
-    }
-}
-
-async function waitForCode(
-    number
-) {
-    const startedAt =
-        Date.now();
-
-    while (
-        Date.now() -
-        startedAt <
-        15000
-    ) {
 
         try {
 
-            const response =
-                await fetch(
-                    '/api/pair/' +
-                    encodeURIComponent(
-                        number
-                    ),
-                    {
-                        method:
-                            'GET',
-                        cache:
-                            'no-store'
-                    }
-                );
+          const response =
+            await fetch(
+              '/pair/status?number=' +
+              encodeURIComponent(number),
+              {
+                method:'GET',
+                cache:'no-store'
+              }
+            );
 
-            if (
-                response.ok
-            ) {
+          if (!response.ok) {
+            return;
+          }
 
-                const data =
-                    await response.json();
+          const data =
+            await response.json();
 
-                if (
-                    data.success &&
-                    data.code
-                ) {
+          if (
+            data.success === true &&
+            (
+              data.connected === true ||
+              data.paired === true ||
+              data.status === 'connected' ||
+              data.status === 'paired'
+            )
+          ) {
 
-                    currentCode =
-                        data.code;
+            clearInterval(
+              pairingCheckTimer
+            );
 
-                    pairCodeEl.textContent =
-                        data.code;
+            pairingCheckTimer =
+              null;
 
-                    setStatus(
-                        'success',
-                        'Pairing code generated.'
-                    );
+            showSuccess(
+              number
+            );
+          }
 
-                    openDialog(
-                        data.code,
-                        false
-                    );
-
-                    return;
-                }
-
-                if (
-                    data.success &&
-                    data.code === null
-                ) {
-                    throw new Error(
-                        'This WhatsApp number is already registered.'
-                    );
-                }
-            }
-
-        } catch (error) {
-
-            if (
-                error.message.includes(
-                    'already registered'
-                )
-            ) {
-                throw error;
-            }
-        }
-
-        await new Promise(
-            resolve =>
-                setTimeout(
-                    resolve,
-                    1500
-                )
-        );
-    }
-
-    throw new Error(
-        'Pairing code was not generated. Please try again.'
+        } catch (error) {}
+      },
+      2000
     );
 }
 
-async function startPairingDetection(
-    number
-) {
-    if (
-        pairingCheckTimer
-    ) {
-        clearInterval(
-            pairingCheckTimer
-        );
-    }
+function showSuccess(number) {
 
-    const startedAt =
-        Date.now();
+  closeDialog();
 
-    pairingCheckTimer =
-        setInterval(
-            async () => {
+  setStatus(
+    'success',
+    'Device connected successfully.'
+  );
 
-                if (
-                    Date.now() -
-                    startedAt >
-                    120000
-                ) {
+  document
+    .getElementById(
+      'success-number-display'
+    )
+    .textContent =
+    '+' + number;
 
-                    clearInterval(
-                        pairingCheckTimer
-                    );
-
-                    pairingCheckTimer =
-                        null;
-
-                    return;
-                }
-
-                try {
-
-                    const response =
-                        await fetch(
-                            '/pair/status?number=' +
-                            encodeURIComponent(
-                                number
-                            ),
-                            {
-                                method:
-                                    'GET',
-                                cache:
-                                    'no-store'
-                            }
-                        );
-
-                    if (
-                        !response.ok
-                    ) {
-                        return;
-                    }
-
-                    const data =
-                        await response.json();
-
-                    if (
-                        data.success ===
-                            true &&
-                        (
-                            data.connected ===
-                                true ||
-                            data.paired ===
-                                true ||
-                            data.status ===
-                                'connected'
-                        )
-                    ) {
-
-                        clearInterval(
-                            pairingCheckTimer
-                        );
-
-                        pairingCheckTimer =
-                            null;
-
-                        showSuccess(
-                            number
-                        );
-                    }
-
-                } catch {
-                }
-
-            },
-            2000
-        );
-}
-
-function showSuccess(
-    number
-) {
-    closeDialog();
-
-    setStatus(
-        'success',
-        'Device connected successfully.'
-    );
-
-    document
-        .getElementById(
-            'success-number-display'
-        )
-        .textContent =
-        '+' + number;
-
-    document
-        .getElementById(
-            'success-screen'
-        )
-        .classList.add(
-            'show'
-        );
+  document
+    .getElementById(
+      'success-screen'
+    )
+    .classList.add('show');
 }
 
 function showQR() {
-    const number =
-        getNumber();
 
-    if (
-        !number ||
-        number.length < 10
-    ) {
-        setStatus(
-            'error',
-            'Enter a valid WhatsApp number with country code.'
-        );
+  const number =
+    getNumber();
 
-        return;
-    }
+  if (
+    !number ||
+    number.length < 10
+  ) {
 
-    openDialog(
-        null,
-        true
+    setStatus(
+      'error',
+      'Enter a valid WhatsApp number with country code.'
     );
+
+    return;
+  }
+
+  openDialog(
+    null,
+    true
+  );
 }
 </script>
 
