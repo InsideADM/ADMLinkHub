@@ -48,8 +48,7 @@ function authenticate(req, res, next) {
         return next();
     }
 
-    const key =
-        req.headers['x-api-key'];
+    const key = req.headers['x-api-key'];
 
     if (key !== config.apiKey) {
         return res.status(401).json({
@@ -74,22 +73,18 @@ app.get('/health', (req, res) => {
     });
 });
 
-app.get(
-    '/pair.html',
-    (req, res) => {
-        res.sendFile(
-            path.join(
-                __dirname,
-                'public',
-                'pair.html'
-            )
-        );
-    }
-);
+app.get('/pair.html', (req, res) => {
+    res.sendFile(
+        path.join(
+            __dirname,
+            'public',
+            'pair.html'
+        )
+    );
+});
 
-app.get(
-    '/pair',
-    (req, res) => {
+app.get('/pair', (req, res) => {
+    if (req.method === 'GET') {
         res.sendFile(
             path.join(
                 __dirname,
@@ -98,7 +93,93 @@ app.get(
             )
         );
     }
-);
+});
+
+app.post('/pair', async (req, res) => {
+    try {
+        const {
+            number
+        } = req.body;
+
+        if (!number) {
+            return res.status(400).json({
+                success: false,
+                error:
+                    'Phone number is required'
+            });
+        }
+
+        const result =
+            await createPairing(number);
+
+        res.json({
+            success: true,
+            number:
+                String(number)
+                    .replace(/\D/g, ''),
+            code:
+                result.code || null
+        });
+
+    } catch (error) {
+        console.error(
+            'Public pairing request failed:',
+            error.message
+        );
+
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+app.get('/pair/status', (req, res) => {
+    try {
+        const number =
+            String(
+                req.query.number || ''
+            ).replace(/\D/g, '');
+
+        if (!number) {
+            return res.status(400).json({
+                success: false,
+                error:
+                    'Phone number is required'
+            });
+        }
+
+        const session =
+            getSession(number);
+
+        const connected =
+            isConnected(number);
+
+        res.json({
+            success: true,
+            number,
+            connected,
+            paired:
+                session?.status ===
+                'connected',
+            status:
+                session?.status ||
+                'disconnected'
+        });
+
+    } catch (error) {
+        console.error(
+            'Public pairing status failed:',
+            error.message
+        );
+
+        res.status(500).json({
+            success: false,
+            error:
+                'Unable to check pairing status'
+        });
+    }
+});
 
 app.get(
     '/api/sessions',
@@ -112,6 +193,7 @@ app.get(
                 success: true,
                 sessions
             });
+
         } catch (error) {
             console.error(
                 'Session query failed:',
@@ -132,12 +214,13 @@ app.get(
     authenticate,
     (req, res) => {
         try {
+            const number =
+                String(
+                    req.params.number
+                ).replace(/\D/g, '');
+
             const session =
-                getSession(
-                    String(
-                        req.params.number
-                    ).replace(/\D/g, '')
-                );
+                getSession(number);
 
             if (!session) {
                 return res.status(404).json({
@@ -151,6 +234,7 @@ app.get(
                 success: true,
                 session
             });
+
         } catch (error) {
             console.error(
                 'Session lookup failed:',
@@ -184,9 +268,7 @@ app.post(
             }
 
             const result =
-                await createPairing(
-                    number
-                );
+                await createPairing(number);
 
             res.json({
                 success: true,
@@ -196,6 +278,7 @@ app.post(
                 code:
                     result.code || null
             });
+
         } catch (error) {
             console.error(
                 'Pairing request failed:',
@@ -221,15 +304,14 @@ app.get(
                 ).replace(/\D/g, '');
 
             const code =
-                await getPairingCode(
-                    number
-                );
+                await getPairingCode(number);
 
             res.json({
                 success: true,
                 number,
                 code
             });
+
         } catch (error) {
             console.error(
                 'Pairing code request failed:',
@@ -279,6 +361,7 @@ app.get(
                     session?.status ||
                     'disconnected'
             });
+
         } catch (error) {
             console.error(
                 'Pairing status failed:',
@@ -303,13 +386,11 @@ app.use(
     )
 );
 
-app.use(
-    (req, res) => {
-        res.status(404).json({
-            error: 'Not Found'
-        });
-    }
-);
+app.use((req, res) => {
+    res.status(404).json({
+        error: 'Not Found'
+    });
+});
 
 const PORT =
     Number(
