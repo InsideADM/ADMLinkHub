@@ -223,8 +223,7 @@ async function createPairing(number) {
             async () => {
                 try {
                     if (
-                        state.creds
-                            .registered
+                        state.creds.registered
                     ) {
                         return;
                     }
@@ -299,26 +298,22 @@ async function getPairingCode(number) {
         return code;
     }
 
+    const sessionDir =
+        ensureSessionDir(
+            phoneNumber
+        );
+
+    const {
+        state
+    } =
+        await useMultiFileAuthState(
+            sessionDir
+        );
+
     if (
-        !socket?.authState?.creds
+        state.creds.registered
     ) {
-        const sessionDir =
-            ensureSessionDir(
-                phoneNumber
-            );
-
-        const {
-            state
-        } =
-            await useMultiFileAuthState(
-                sessionDir
-            );
-
-        if (
-            state.creds.registered
-        ) {
-            return null;
-        }
+        return null;
     }
 
     code =
