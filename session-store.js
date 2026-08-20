@@ -8,8 +8,16 @@ const baseDir = path.resolve(
     config.sessionDir
 );
 
+if (!fs.existsSync(baseDir)) {
+    fs.mkdirSync(baseDir, {
+        recursive: true
+    });
+}
+
 function normalizeNumber(number) {
-    return String(number || '').replace(/\D/g, '');
+    return String(
+        number || ''
+    ).replace(/\D/g, '');
 }
 
 function getSessionDir(number) {
@@ -32,11 +40,9 @@ function ensureSessionDir(number) {
     const dir =
         getSessionDir(number);
 
-    if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, {
-            recursive: true
-        });
-    }
+    fs.mkdirSync(dir, {
+        recursive: true
+    });
 
     return dir;
 }
@@ -49,10 +55,13 @@ function sessionExists(number) {
         return false;
     }
 
-    const files =
-        fs.readdirSync(dir);
-
-    return files.length > 0;
+    try {
+        return fs
+            .readdirSync(dir)
+            .length > 0;
+    } catch {
+        return false;
+    }
 }
 
 function listSessions() {
@@ -60,18 +69,29 @@ function listSessions() {
         return [];
     }
 
-    return fs.readdirSync(baseDir)
-        .filter(name => {
-            const fullPath =
-                path.join(
-                    baseDir,
-                    name
-                );
-
-            return fs.statSync(
-                fullPath
-            ).isDirectory();
-        });
+    try {
+        return fs
+            .readdirSync(
+                baseDir,
+                {
+                    withFileTypes: true
+                }
+            )
+            .filter(
+                entry =>
+                    entry.isDirectory()
+            )
+            .map(
+                entry =>
+                    entry.name
+            )
+            .filter(
+                name =>
+                    /^\d+$/.test(name)
+            );
+    } catch {
+        return [];
+    }
 }
 
 function deleteSession(number) {
@@ -92,12 +112,22 @@ function getSessionFile(
     number,
     fileName
 ) {
+    if (
+        !fileName ||
+        typeof fileName !==
+            'string'
+    ) {
+        throw new Error(
+            'Invalid session file name'
+        );
+    }
+
     const dir =
         getSessionDir(number);
 
     return path.join(
         dir,
-        fileName
+        path.basename(fileName)
     );
 }
 
@@ -115,10 +145,19 @@ function readSessionFile(
         return null;
     }
 
-    return fs.readFileSync(
-        file,
-        'utf8'
-    );
+    try {
+        return fs.readFileSync(
+            file,
+            'utf8'
+        );
+    } catch (error) {
+        console.error(
+            'Session file read error:',
+            error.message
+        );
+
+        return null;
+    }
 }
 
 function writeSessionFile(
@@ -130,8 +169,8 @@ function writeSessionFile(
         ensureSessionDir(number);
 
     const file =
-        path.join(
-            dir,
+        getSessionFile(
+            number,
             fileName
         );
 
@@ -143,6 +182,10 @@ function writeSessionFile(
     return true;
 }
 
+function getBaseDir() {
+    return baseDir;
+}
+
 module.exports = {
     normalizeNumber,
     getSessionDir,
@@ -152,5 +195,6 @@ module.exports = {
     deleteSession,
     getSessionFile,
     readSessionFile,
-    writeSessionFile
+    writeSessionFile,
+    getBaseDir
 };
