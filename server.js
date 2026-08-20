@@ -22,170 +22,331 @@ const app = express();
 
 app.set('trust proxy', 1);
 
-app.disable('x-powered-by');
+app.use(express.json());
+app.use(express.urlencoded({
+    extended: true
+}));
 
-app.use(
-    express.json({
-        limit: '100kb'
-    })
-);
-
-app.use(
-    express.urlencoded({
-        extended: true,
-        limit: '100kb'
-    })
-);
-
-const limiter =
-    rateLimit({
-        windowMs:
-            15 * 60 * 1000,
-
-        max: 100,
-
-        standardHeaders:
-            true,
-
-        legacyHeaders:
-            false,
-
-        message: {
-            success: false,
-            error:
-                'Too many requests. Please try again later.'
-        }
-    });
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 100,
+    standardHeaders: true,
+    legacyHeaders: false
+});
 
 app.use(limiter);
 
-const publicDir =
-    path.join(
-        __dirname,
-        'public'
-    );
-
-const sessionsDir =
-    path.resolve(
-        process.cwd(),
-        config.sessionDir
-    );
+const sessionsDir = path.resolve(
+    process.cwd(),
+    config.sessionDir
+);
 
 if (!fs.existsSync(sessionsDir)) {
-    fs.mkdirSync(
-        sessionsDir,
-        {
-            recursive: true
-        }
-    );
+    fs.mkdirSync(sessionsDir, {
+        recursive: true
+    });
 }
 
 function normalizeNumber(number) {
-    return String(
-        number || ''
-    ).replace(/\D/g, '');
+    return String(number || '')
+        .replace(/\D/g, '');
 }
 
-function authenticate(
-    req,
-    res,
-    next
-) {
+function authenticate(req, res, next) {
     if (!config.apiKey) {
         return next();
     }
 
     const key =
-        req.headers[
-            'x-api-key'
-        ];
+        req.headers['x-api-key'];
 
-    if (
-        !key ||
-        key !== config.apiKey
-    ) {
+    if (key !== config.apiKey) {
         return res.status(401).json({
             success: false,
-            error:
-                'Unauthorized'
+            error: 'Unauthorized'
         });
     }
 
     next();
 }
 
-app.get(
-    '/',
-    (req, res) => {
-        res.json({
-            name:
-                'ADM Link Hub',
+app.get('/', (req, res) => {
+    res.json({
+        name: 'ADM Link Hub',
+        version: '1.0.0',
+        status: 'online'
+    });
+});
 
-            version:
-                '1.0.0',
+app.get('/health', (req, res) => {
+    res.json({
+        success: true,
+        status: 'ok',
+        service: 'ADM Link Hub',
+        timestamp: new Date().toISOString()
+    });
+});
 
-            status:
-                'online'
-        });
-    }
-);
+app.get('/pair.html', (req, res) => {
+    res.sendFile(
+        path.join(
+            __dirname,
+            'public',
+            'pair.html'
+        )
+    );
+});
 
-app.get(
-    '/health',
-    (req, res) => {
-        res.json({
-            status:
-                'ok',
+app.get('/pair', async (req, res) => {
+    const number =
+        normalizeNumber(
+            req.query.number ||
+            req.query.code
+        );
 
-            service:
-                'ADM Link Hub',
-
-            uptime:
-                process.uptime()
-        });
-    }
-);
-
-app.get(
-    '/api/status',
-    (req, res) => {
-        res.json({
-            success:
-                true,
-
-            service:
-                'ADM Link Hub',
-
-            status:
-                'online',
-
-            sessions:
-                getSessions().length
-        });
-    }
-);
-
-app.get(
-    '/pair.html',
-    (req, res) => {
-        res.sendFile(
+    if (!number) {
+        return res.sendFile(
             path.join(
-                publicDir,
+                __dirname,
+                'public',
                 'pair.html'
             )
         );
     }
+
+    try {
+        const result =
+            await createPairing(
+                number
+            );
+
+        res.json({
+            success: true,
+            number,
+            code:
+                result.code ||
+                null,
+            status:
+                result.status ||
+                getConnectionStatus(
+                    number
+                )
+        });
+
+    } catch (error) {
+        console.error(
+            'Public pairing request failed:',
+            error.message
+        );
+
+        res.status(500).json({
+            success: false,
+            error:
+                error.message ||
+                'Unable to generate pairing code'
+        });
+    }
+});
+
+app.post('/pair', async (req, res) => {
+    try {
+        const number =
+            normalizeNumber(
+                req.body.number
+            );
+
+        if (!number) {
+            return res.status(400).json({
+                success: false,
+                error:
+                    'Phone number is required'
+            });
+        }
+
+        const result =
+            await createPairing(
+                number
+            );
+
+        res.json({
+            success: true,
+            number,
+            code:
+                result.code ||
+                null,
+            status:
+                result.status ||
+                getConnectionStatus(
+                    number
+                )
+        });
+
+    } catch (error) {
+        console.error(
+            'Public pairing request failed:',
+            error.message
+        );
+
+        res.status(500).json({
+            success: false,
+            error:
+                error.message ||
+                'Unable to generate pairing code'
+        });
+    }
+});
+
+app.get('/pair/status', (req, res) => {
+    try {
+        const number =
+            normalizeNumber(
+                req.query.number
+            );
+
+        if (!number) {
+            return res.status(400).json({
+                success: false,
+                error:
+                    'Phone number is required'
+            });
+        }
+
+        const session =
+            getSession(number);
+
+        const status =
+            getConnectionStatus(
+                number
+            );
+
+        res.json({
+            success: true,
+            number,
+            connected:
+                status === 'connected',
+            paired:
+                status === 'connected',
+            status,
+            databaseStatus:
+                session?.status ||
+                'disconnected'
+        });
+
+    } catch (error) {
+        console.error(
+            'Public pairing status failed:',
+            error.message
+        );
+
+        res.status(500).json({
+            success: false,
+            error:
+                'Unable to check pairing status'
+        });
+    }
+});
+
+app.get(
+    '/api/sessions',
+    authenticate,
+    (req, res) => {
+        try {
+            const sessions =
+                getAllSessions();
+
+            const result =
+                sessions.map(
+                    session => ({
+                        ...session,
+                        connected:
+                            isConnected(
+                                session.phone_number
+                            ),
+                        liveStatus:
+                            getConnectionStatus(
+                                session.phone_number
+                            )
+                    })
+                );
+
+            res.json({
+                success: true,
+                count: result.length,
+                sessions: result
+            });
+
+        } catch (error) {
+            console.error(
+                'Session query failed:',
+                error.message
+            );
+
+            res.status(500).json({
+                success: false,
+                error:
+                    'Unable to retrieve sessions'
+            });
+        }
+    }
 );
 
 app.get(
-    '/pair',
+    '/api/session/:number',
+    authenticate,
     (req, res) => {
-        res.sendFile(
-            path.join(
-                publicDir,
-                'pair.html'
-            )
-        );
+        try {
+            const number =
+                normalizeNumber(
+                    req.params.number
+                );
+
+            if (!number) {
+                return res.status(400).json({
+                    success: false,
+                    error:
+                        'Invalid phone number'
+                });
+            }
+
+            const session =
+                getSession(number);
+
+            if (!session) {
+                return res.status(404).json({
+                    success: false,
+                    error:
+                        'Session not found'
+                });
+            }
+
+            const liveStatus =
+                getConnectionStatus(
+                    number
+                );
+
+            res.json({
+                success: true,
+                session: {
+                    ...session,
+                    connected:
+                        liveStatus ===
+                        'connected',
+                    liveStatus
+                }
+            });
+
+        } catch (error) {
+            console.error(
+                'Session lookup failed:',
+                error.message
+            );
+
+            res.status(500).json({
+                success: false,
+                error:
+                    'Unable to retrieve session'
+            });
+        }
     }
 );
 
@@ -200,12 +361,8 @@ app.post(
                 );
 
             if (!number) {
-                return res.status(
-                    400
-                ).json({
-                    success:
-                        false,
-
+                return res.status(400).json({
+                    success: false,
                     error:
                         'Phone number is required'
                 });
@@ -216,29 +373,27 @@ app.post(
                     number
                 );
 
-            return res.json({
-                success:
-                    true,
-
+            res.json({
+                success: true,
                 number,
-
                 code:
                     result.code ||
-                    null
+                    null,
+                status:
+                    result.status ||
+                    getConnectionStatus(
+                        number
+                    )
             });
 
         } catch (error) {
             console.error(
-                'Pairing request failed:',
-                error
+                'API pairing request failed:',
+                error.message
             );
 
-            return res.status(
-                500
-            ).json({
-                success:
-                    false,
-
+            res.status(500).json({
+                success: false,
                 error:
                     error.message ||
                     'Unable to generate pairing code'
@@ -258,14 +413,10 @@ app.get(
                 );
 
             if (!number) {
-                return res.status(
-                    400
-                ).json({
-                    success:
-                        false,
-
+                return res.status(400).json({
+                    success: false,
                     error:
-                        'Phone number is required'
+                        'Invalid phone number'
                 });
             }
 
@@ -274,29 +425,27 @@ app.get(
                     number
                 );
 
-            return res.json({
-                success:
-                    true,
+            const status =
+                getConnectionStatus(
+                    number
+                );
 
+            res.json({
+                success: true,
                 number,
-
                 code:
-                    code ||
-                    null
+                    code || null,
+                status
             });
 
         } catch (error) {
             console.error(
                 'Pairing code request failed:',
-                error
+                error.message
             );
 
-            return res.status(
-                500
-            ).json({
-                success:
-                    false,
-
+            res.status(500).json({
+                success: false,
                 error:
                     error.message ||
                     'Unable to retrieve pairing code'
@@ -316,60 +465,42 @@ app.get(
                 );
 
             if (!number) {
-                return res.status(
-                    400
-                ).json({
-                    success:
-                        false,
-
+                return res.status(400).json({
+                    success: false,
                     error:
                         'Phone number is required'
                 });
             }
 
             const session =
-                getSession(
-                    number
-                );
+                getSession(number);
 
-            const connectionStatus =
+            const status =
                 getConnectionStatus(
                     number
                 );
 
-            return res.json({
-                success:
-                    true,
-
+            res.json({
+                success: true,
                 number,
-
                 connected:
-                    isConnected(
-                        number
-                    ),
-
+                    status === 'connected',
                 paired:
-                    session?.status ===
-                    'connected',
-
-                status:
+                    status === 'connected',
+                status,
+                databaseStatus:
                     session?.status ||
-                    connectionStatus ||
                     'disconnected'
             });
 
         } catch (error) {
             console.error(
                 'Pairing status failed:',
-                error
+                error.message
             );
 
-            return res.status(
-                500
-            ).json({
-                success:
-                    false,
-
+            res.status(500).json({
+                success: false,
                 error:
                     'Unable to check pairing status'
             });
@@ -377,151 +508,21 @@ app.get(
     }
 );
 
-app.get(
-    '/api/sessions',
-    authenticate,
-    (req, res) => {
-        try {
-            const sessions =
-                getAllSessions();
-
-            return res.json({
-                success:
-                    true,
-
-                sessions
-            });
-
-        } catch (error) {
-            console.error(
-                'Session query failed:',
-                error
-            );
-
-            return res.status(
-                500
-            ).json({
-                success:
-                    false,
-
-                error:
-                    'Unable to retrieve sessions'
-            });
-        }
-    }
-);
-
-app.get(
-    '/api/session/:number',
-    authenticate,
-    (req, res) => {
-        try {
-            const number =
-                normalizeNumber(
-                    req.params.number
-                );
-
-            if (!number) {
-                return res.status(
-                    400
-                ).json({
-                    success:
-                        false,
-
-                    error:
-                        'Invalid phone number'
-                });
-            }
-
-            const session =
-                getSession(
-                    number
-                );
-
-            if (!session) {
-                return res.status(
-                    404
-                ).json({
-                    success:
-                        false,
-
-                    error:
-                        'Session not found'
-                });
-            }
-
-            return res.json({
-                success:
-                    true,
-
-                session
-            });
-
-        } catch (error) {
-            console.error(
-                'Session lookup failed:',
-                error
-            );
-
-            return res.status(
-                500
-            ).json({
-                success:
-                    false,
-
-                error:
-                    'Unable to retrieve session'
-            });
-        }
-    }
-);
-
 app.use(
     express.static(
-        publicDir,
-        {
-            extensions: [
-                'html'
-            ],
-
-            index:
-                false,
-
-            maxAge:
-                '1h'
-        }
+        path.join(
+            __dirname,
+            'public'
+        )
     )
 );
 
-app.use(
-    (req, res) => {
-        if (
-            req.path.startsWith(
-                '/api/'
-            )
-        ) {
-            return res.status(
-                404
-            ).json({
-                success:
-                    false,
-
-                error:
-                    'API endpoint not found'
-            });
-        }
-
-        return res.status(
-            404
-        ).json({
-            success:
-                false,
-
-            error:
-                'Not Found'
-        });
-    }
-);
+app.use((req, res) => {
+    res.status(404).json({
+        success: false,
+        error: 'Not Found'
+    });
+});
 
 const PORT =
     Number(
@@ -530,56 +531,12 @@ const PORT =
         3000
     );
 
-const server =
-    app.listen(
-        PORT,
-        '0.0.0.0',
-        () => {
-            console.log(
-                `ADM Link Hub running on port ${PORT}`
-            );
-
-            console.log(
-                `Public directory: ${publicDir}`
-            );
-
-            console.log(
-                `Session directory: ${sessionsDir}`
-            );
-        }
-    );
-
-function shutdown(
-    signal
-) {
-    console.log(
-        `${signal} received. Shutting down...`
-    );
-
-    server.close(
-        () => {
-            console.log(
-                'HTTP server closed.'
-            );
-
-            process.exit(0);
-        }
-    );
-
-    setTimeout(
-        () => {
-            process.exit(1);
-        },
-        10000
-    );
-}
-
-process.on(
-    'SIGTERM',
-    () => shutdown('SIGTERM')
-);
-
-process.on(
-    'SIGINT',
-    () => shutdown('SIGINT')
+app.listen(
+    PORT,
+    '0.0.0.0',
+    () => {
+        console.log(
+            `ADM Link Hub running on port ${PORT}`
+        );
+    }
 );
