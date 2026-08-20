@@ -22,6 +22,7 @@ const app = express();
 app.set('trust proxy', 1);
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
@@ -41,6 +42,11 @@ if (!fs.existsSync(sessionsDir)) {
     fs.mkdirSync(sessionsDir, {
         recursive: true
     });
+}
+
+function normalizeNumber(number) {
+    return String(number || '')
+        .replace(/\D/g, '');
 }
 
 function authenticate(req, res, next) {
@@ -83,9 +89,14 @@ app.get('/pair.html', (req, res) => {
     );
 });
 
-app.get('/pair', (req, res) => {
-    if (req.method === 'GET') {
-        res.sendFile(
+app.get('/pair', async (req, res) => {
+    const number = normalizeNumber(
+        req.query.code ||
+        req.query.number
+    );
+
+    if (!number) {
+        return res.sendFile(
             path.join(
                 __dirname,
                 'public',
@@ -93,13 +104,38 @@ app.get('/pair', (req, res) => {
             )
         );
     }
+
+    try {
+        const result =
+            await createPairing(number);
+
+        return res.json({
+            success: true,
+            number,
+            code: result.code || null
+        });
+
+    } catch (error) {
+        console.error(
+            'Public pairing request failed:',
+            error
+        );
+
+        return res.status(500).json({
+            success: false,
+            message:
+                error.message ||
+                'Unable to generate pairing code'
+        });
+    }
 });
 
 app.post('/pair', async (req, res) => {
     try {
-        const {
-            number
-        } = req.body;
+        const number =
+            normalizeNumber(
+                req.body.number
+            );
 
         if (!number) {
             return res.status(400).json({
@@ -114,22 +150,21 @@ app.post('/pair', async (req, res) => {
 
         res.json({
             success: true,
-            number:
-                String(number)
-                    .replace(/\D/g, ''),
-            code:
-                result.code || null
+            number,
+            code: result.code || null
         });
 
     } catch (error) {
         console.error(
             'Public pairing request failed:',
-            error.message
+            error
         );
 
         res.status(500).json({
             success: false,
-            error: error.message
+            error:
+                error.message ||
+                'Unable to generate pairing code'
         });
     }
 });
@@ -137,9 +172,9 @@ app.post('/pair', async (req, res) => {
 app.get('/pair/status', (req, res) => {
     try {
         const number =
-            String(
-                req.query.number || ''
-            ).replace(/\D/g, '');
+            normalizeNumber(
+                req.query.number
+            );
 
         if (!number) {
             return res.status(400).json({
@@ -170,7 +205,7 @@ app.get('/pair/status', (req, res) => {
     } catch (error) {
         console.error(
             'Public pairing status failed:',
-            error.message
+            error
         );
 
         res.status(500).json({
@@ -197,7 +232,7 @@ app.get(
         } catch (error) {
             console.error(
                 'Session query failed:',
-                error.message
+                error
             );
 
             res.status(500).json({
@@ -215,9 +250,9 @@ app.get(
     (req, res) => {
         try {
             const number =
-                String(
+                normalizeNumber(
                     req.params.number
-                ).replace(/\D/g, '');
+                );
 
             const session =
                 getSession(number);
@@ -238,7 +273,7 @@ app.get(
         } catch (error) {
             console.error(
                 'Session lookup failed:',
-                error.message
+                error
             );
 
             res.status(500).json({
@@ -255,9 +290,10 @@ app.post(
     authenticate,
     async (req, res) => {
         try {
-            const {
-                number
-            } = req.body;
+            const number =
+                normalizeNumber(
+                    req.body.number
+                );
 
             if (!number) {
                 return res.status(400).json({
@@ -272,22 +308,23 @@ app.post(
 
             res.json({
                 success: true,
-                number:
-                    String(number)
-                        .replace(/\D/g, ''),
+                number,
                 code:
-                    result.code || null
+                    result.code ||
+                    null
             });
 
         } catch (error) {
             console.error(
                 'Pairing request failed:',
-                error.message
+                error
             );
 
             res.status(500).json({
                 success: false,
-                error: error.message
+                error:
+                    error.message ||
+                    'Unable to generate pairing code'
             });
         }
     }
@@ -299,9 +336,17 @@ app.get(
     async (req, res) => {
         try {
             const number =
-                String(
+                normalizeNumber(
                     req.params.number
-                ).replace(/\D/g, '');
+                );
+
+            if (!number) {
+                return res.status(400).json({
+                    success: false,
+                    error:
+                        'Phone number is required'
+                });
+            }
 
             const code =
                 await getPairingCode(number);
@@ -315,12 +360,14 @@ app.get(
         } catch (error) {
             console.error(
                 'Pairing code request failed:',
-                error.message
+                error
             );
 
             res.status(500).json({
                 success: false,
-                error: error.message
+                error:
+                    error.message ||
+                    'Unable to retrieve pairing code'
             });
         }
     }
@@ -332,9 +379,9 @@ app.get(
     (req, res) => {
         try {
             const number =
-                String(
-                    req.query.number || ''
-                ).replace(/\D/g, '');
+                normalizeNumber(
+                    req.query.number
+                );
 
             if (!number) {
                 return res.status(400).json({
@@ -365,7 +412,7 @@ app.get(
         } catch (error) {
             console.error(
                 'Pairing status failed:',
-                error.message
+                error
             );
 
             res.status(500).json({
