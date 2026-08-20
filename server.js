@@ -1,233 +1,648 @@
+const express = require('express');
+const rateLimit = require('express-rate-limit');
+const path = require('path');
+const fs = require('fs');
+
+const config = require('./config');
+
+const {
+    createPairing,
+    getPairingCode,
+    getSocket,
+    getSessions,
+    isConnected
+} = require('./pairing');
+
 const {
     getAllSessions,
     getSession
 } = require('./database');
 
-const {
-    createPairing,
-    getPairingCode,
-    isConnected
-} = require('./pairing');
+const app = express();
 
-const {
-    normalizeNumber
-} = require('./session-store');
+app.set('trust proxy', 1);
 
-function registerBravoControl(app, config) {
-    function authenticate(req, res, next) {
-        if (!config.apiKey) {
-            return res.status(503).json({
-                success: false,
-                error: 'BravoControl API is not configured'
-            });
-        }
+app.use(express.json());
+app.use(express.urlencoded({
+    extended: true
+}));
 
-        const key = req.headers['x-api-key'];
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 100,
+    standardHeaders: true,
+    legacyHeaders: false
+});
 
-        if (!key || key !== config.apiKey) {
-            return res.status(401).json({
-                success: false,
-                error: 'Unauthorized'
-            });
-        }
+app.use(limiter);
 
-        next();
-    }
+const sessionsDir = path.resolve(
+    process.cwd(),
+    config.sessionDir
+);
 
-    app.get(
-        '/api/bravocontrol/status',
-        authenticate,
-        (req, res) => {
-            res.json({
-                success: true,
-                service: 'ADM Link Hub',
-                integration: 'BravoControl',
-                status: 'online',
-                timestamp: new Date().toISOString()
-            });
-        }
-    );
-
-    app.get(
-        '/api/bravocontrol/sessions',
-        authenticate,
-        (req, res) => {
-            try {
-                const sessions = getAllSessions();
-
-                res.json({
-                    success: true,
-                    sessions: sessions.map(session => ({
-                        id: session.id,
-                        number: session.phone_number,
-                        status: session.status,
-                        connected:
-                            isConnected(
-                                session.phone_number
-                            ),
-                        created_at:
-                            session.created_at,
-                        updated_at:
-                            session.updated_at
-                    }))
-                });
-            } catch (error) {
-                console.error(
-                    'BravoControl sessions error:',
-                    error.message
-                );
-
-                res.status(500).json({
-                    success: false,
-                    error: 'Unable to retrieve sessions'
-                });
-            }
-        }
-    );
-
-    app.get(
-        '/api/bravocontrol/session/:number',
-        authenticate,
-        (req, res) => {
-            try {
-                const number =
-                    normalizeNumber(
-                        req.params.number
-                    );
-
-                if (!number) {
-                    return res.status(400).json({
-                        success: false,
-                        error: 'Invalid phone number'
-                    });
-                }
-
-                const session =
-                    getSession(number);
-
-                if (!session) {
-                    return res.status(404).json({
-                        success: false,
-                        error: 'Session not found'
-                    });
-                }
-
-                res.json({
-                    success: true,
-                    session: {
-                        id: session.id,
-                        number:
-                            session.phone_number,
-                        status:
-                            session.status,
-                        connected:
-                            isConnected(number),
-                        created_at:
-                            session.created_at,
-                        updated_at:
-                            session.updated_at
-                    }
-                });
-            } catch (error) {
-                console.error(
-                    'BravoControl session error:',
-                    error.message
-                );
-
-                res.status(500).json({
-                    success: false,
-                    error: 'Unable to retrieve session'
-                });
-            }
-        }
-    );
-
-    app.post(
-        '/api/bravocontrol/pair',
-        authenticate,
-        async (req, res) => {
-            try {
-                const number =
-                    normalizeNumber(
-                        req.body.number
-                    );
-
-                if (!number) {
-                    return res.status(400).json({
-                        success: false,
-                        error:
-                            'Phone number is required'
-                    });
-                }
-
-                const result =
-                    await createPairing(number);
-
-                res.json({
-                    success: true,
-                    number,
-                    code:
-                        result.code || null
-                });
-            } catch (error) {
-                console.error(
-                    'BravoControl pairing error:',
-                    error.message
-                );
-
-                res.status(500).json({
-                    success: false,
-                    error:
-                        error.message ||
-                        'Unable to start pairing'
-                });
-            }
-        }
-    );
-
-    app.get(
-        '/api/bravocontrol/pair/:number',
-        authenticate,
-        async (req, res) => {
-            try {
-                const number =
-                    normalizeNumber(
-                        req.params.number
-                    );
-
-                if (!number) {
-                    return res.status(400).json({
-                        success: false,
-                        error:
-                            'Invalid phone number'
-                    });
-                }
-
-                const code =
-                    await getPairingCode(number);
-
-                res.json({
-                    success: true,
-                    number,
-                    code
-                });
-            } catch (error) {
-                console.error(
-                    'BravoControl pairing code error:',
-                    error.message
-                );
-
-                res.status(500).json({
-                    success: false,
-                    error:
-                        error.message ||
-                        'Unable to retrieve pairing code'
-                });
-            }
-        }
-    );
+if (!fs.existsSync(sessionsDir)) {
+    fs.mkdirSync(sessionsDir, {
+        recursive: true
+    });
 }
 
-module.exports = {
-    registerBravoControl
-};
+function normalizeNumber(number) {
+    return String(number || '')
+        .replace(/\D/g, '');
+}
+
+function authenticate(req, res, next) {
+    if (!config.apiKey) {
+        return next();
+    }
+
+    const key =
+        req.headers['x-api-key'];
+
+    if (key !== config.apiKey) {
+        return res.status(401).json({
+            success: false,
+            error: 'Unauthorized'
+        });
+    }
+
+    next();
+}
+
+app.get('/', (req, res) => {
+    res.json({
+        name: 'ADM Link Hub',
+        version: '1.0.0',
+        status: 'online'
+    });
+});
+
+app.get('/health', (req, res) => {
+    res.json({
+        success: true,
+        status: 'ok',
+        service: 'ADM Link Hub'
+    });
+});
+
+app.get('/pair.html', (req, res) => {
+    res.sendFile(
+        path.join(
+            __dirname,
+            'public',
+            'pair.html'
+        )
+    );
+});
+
+app.get('/pair', async (req, res) => {
+    const number =
+        normalizeNumber(
+            req.query.code ||
+            req.query.number
+        );
+
+    if (!number) {
+        return res.sendFile(
+            path.join(
+                __dirname,
+                'public',
+                'pair.html'
+            )
+        );
+    }
+
+    try {
+        const result =
+            await createPairing(number);
+
+        return res.json({
+            success: true,
+            number,
+            code: result.code || null
+        });
+
+    } catch (error) {
+        console.error(
+            'Public pairing request failed:',
+            error.message
+        );
+
+        return res.status(500).json({
+            success: false,
+            error:
+                error.message ||
+                'Unable to generate pairing code'
+        });
+    }
+});
+
+app.post('/pair', async (req, res) => {
+    try {
+        const number =
+            normalizeNumber(
+                req.body.number
+            );
+
+        if (!number) {
+            return res.status(400).json({
+                success: false,
+                error:
+                    'Phone number is required'
+            });
+        }
+
+        const result =
+            await createPairing(number);
+
+        return res.json({
+            success: true,
+            number,
+            code: result.code || null
+        });
+
+    } catch (error) {
+        console.error(
+            'Public pairing request failed:',
+            error.message
+        );
+
+        return res.status(500).json({
+            success: false,
+            error:
+                error.message ||
+                'Unable to generate pairing code'
+        });
+    }
+});
+
+app.get('/pair/status', (req, res) => {
+    try {
+        const number =
+            normalizeNumber(
+                req.query.number
+            );
+
+        if (!number) {
+            return res.status(400).json({
+                success: false,
+                error:
+                    'Phone number is required'
+            });
+        }
+
+        const session =
+            getSession(number);
+
+        const connected =
+            isConnected(number);
+
+        return res.json({
+            success: true,
+            number,
+            connected,
+            paired:
+                session?.status ===
+                'connected',
+            status:
+                session?.status ||
+                'disconnected'
+        });
+
+    } catch (error) {
+        console.error(
+            'Public pairing status failed:',
+            error.message
+        );
+
+        return res.status(500).json({
+            success: false,
+            error:
+                'Unable to check pairing status'
+        });
+    }
+});
+
+app.get(
+    '/api/sessions',
+    authenticate,
+    (req, res) => {
+        try {
+            const sessions =
+                getAllSessions();
+
+            return res.json({
+                success: true,
+                sessions
+            });
+
+        } catch (error) {
+            console.error(
+                'Session query failed:',
+                error.message
+            );
+
+            return res.status(500).json({
+                success: false,
+                error:
+                    'Unable to retrieve sessions'
+            });
+        }
+    }
+);
+
+app.get(
+    '/api/session/:number',
+    authenticate,
+    (req, res) => {
+        try {
+            const number =
+                normalizeNumber(
+                    req.params.number
+                );
+
+            if (!number) {
+                return res.status(400).json({
+                    success: false,
+                    error:
+                        'Invalid phone number'
+                });
+            }
+
+            const session =
+                getSession(number);
+
+            if (!session) {
+                return res.status(404).json({
+                    success: false,
+                    error:
+                        'Session not found'
+                });
+            }
+
+            return res.json({
+                success: true,
+                session
+            });
+
+        } catch (error) {
+            console.error(
+                'Session lookup failed:',
+                error.message
+            );
+
+            return res.status(500).json({
+                success: false,
+                error:
+                    'Unable to retrieve session'
+            });
+        }
+    }
+);
+
+app.post(
+    '/api/pair',
+    authenticate,
+    async (req, res) => {
+        try {
+            const number =
+                normalizeNumber(
+                    req.body.number
+                );
+
+            if (!number) {
+                return res.status(400).json({
+                    success: false,
+                    error:
+                        'Phone number is required'
+                });
+            }
+
+            const result =
+                await createPairing(number);
+
+            return res.json({
+                success: true,
+                number,
+                code:
+                    result.code ||
+                    null
+            });
+
+        } catch (error) {
+            console.error(
+                'Pairing request failed:',
+                error.message
+            );
+
+            return res.status(500).json({
+                success: false,
+                error:
+                    error.message ||
+                    'Unable to generate pairing code'
+            });
+        }
+    }
+);
+
+app.get(
+    '/api/pair/:number',
+    authenticate,
+    async (req, res) => {
+        try {
+            const number =
+                normalizeNumber(
+                    req.params.number
+                );
+
+            if (!number) {
+                return res.status(400).json({
+                    success: false,
+                    error:
+                        'Invalid phone number'
+                });
+            }
+
+            const code =
+                await getPairingCode(number);
+
+            return res.json({
+                success: true,
+                number,
+                code
+            });
+
+        } catch (error) {
+            console.error(
+                'Pairing code request failed:',
+                error.message
+            );
+
+            return res.status(500).json({
+                success: false,
+                error:
+                    error.message ||
+                    'Unable to retrieve pairing code'
+            });
+        }
+    }
+);
+
+app.get(
+    '/api/pair/status',
+    authenticate,
+    (req, res) => {
+        try {
+            const number =
+                normalizeNumber(
+                    req.query.number
+                );
+
+            if (!number) {
+                return res.status(400).json({
+                    success: false,
+                    error:
+                        'Phone number is required'
+                });
+            }
+
+            const session =
+                getSession(number);
+
+            const connected =
+                isConnected(number);
+
+            return res.json({
+                success: true,
+                number,
+                connected,
+                paired:
+                    session?.status ===
+                    'connected',
+                status:
+                    session?.status ||
+                    'disconnected'
+            });
+
+        } catch (error) {
+            console.error(
+                'Pairing status failed:',
+                error.message
+            );
+
+            return res.status(500).json({
+                success: false,
+                error:
+                    'Unable to check pairing status'
+            });
+        }
+    }
+);
+
+app.get(
+    '/api/session/:number/connection',
+    authenticate,
+    (req, res) => {
+        try {
+            const number =
+                normalizeNumber(
+                    req.params.number
+                );
+
+            if (!number) {
+                return res.status(400).json({
+                    success: false,
+                    error:
+                        'Invalid phone number'
+                });
+            }
+
+            const socket =
+                getSocket(number);
+
+            const session =
+                getSession(number);
+
+            const connected =
+                Boolean(socket) &&
+                isConnected(number);
+
+            return res.json({
+                success: true,
+                number,
+                connected,
+                status:
+                    session?.status ||
+                    (
+                        connected
+                            ? 'connected'
+                            : 'disconnected'
+                    )
+            });
+
+        } catch (error) {
+            console.error(
+                'Connection lookup failed:',
+                error.message
+            );
+
+            return res.status(500).json({
+                success: false,
+                error:
+                    'Unable to check connection'
+            });
+        }
+    }
+);
+
+app.post(
+    '/api/session/:number/send',
+    authenticate,
+    async (req, res) => {
+        try {
+            const number =
+                normalizeNumber(
+                    req.params.number
+                );
+
+            const jid =
+                String(
+                    req.body.jid || ''
+                ).trim();
+
+            const message =
+                String(
+                    req.body.message || ''
+                );
+
+            if (!number) {
+                return res.status(400).json({
+                    success: false,
+                    error:
+                        'Invalid phone number'
+                });
+            }
+
+            if (!jid) {
+                return res.status(400).json({
+                    success: false,
+                    error:
+                        'Recipient JID is required'
+                });
+            }
+
+            if (!message.trim()) {
+                return res.status(400).json({
+                    success: false,
+                    error:
+                        'Message is required'
+                });
+            }
+
+            const socket =
+                getSocket(number);
+
+            if (!socket) {
+                return res.status(404).json({
+                    success: false,
+                    error:
+                        'WhatsApp session is not connected'
+                });
+            }
+
+            const result =
+                await socket.sendMessage(
+                    jid,
+                    {
+                        text: message
+                    }
+                );
+
+            return res.json({
+                success: true,
+                number,
+                jid,
+                messageId:
+                    result?.key?.id ||
+                    null
+            });
+
+        } catch (error) {
+            console.error(
+                'Message send failed:',
+                error.message
+            );
+
+            return res.status(500).json({
+                success: false,
+                error:
+                    error.message ||
+                    'Unable to send message'
+            });
+        }
+    }
+);
+
+app.get(
+    '/api/whatsapp/sessions',
+    authenticate,
+    (req, res) => {
+        try {
+            const sessions =
+                getSessions();
+
+            return res.json({
+                success: true,
+                sessions
+            });
+
+        } catch (error) {
+            console.error(
+                'WhatsApp sessions lookup failed:',
+                error.message
+            );
+
+            return res.status(500).json({
+                success: false,
+                error:
+                    'Unable to retrieve WhatsApp sessions'
+            });
+        }
+    }
+);
+
+app.use(
+    express.static(
+        path.join(
+            __dirname,
+            'public'
+        )
+    )
+);
+
+app.use(
+    (req, res) => {
+        res.status(404).json({
+            success: false,
+            error: 'Not Found'
+        });
+    }
+);
+
+const PORT =
+    Number(
+        process.env.PORT ||
+        config.port ||
+        3000
+    );
+
+app.listen(
+    PORT,
+    '0.0.0.0',
+    () => {
+        console.log(
+            `ADM Link Hub running on port ${PORT}`
+        );
+    }
+);
