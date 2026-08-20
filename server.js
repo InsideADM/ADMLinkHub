@@ -12,6 +12,8 @@ const {
 
 const app = express();
 
+app.set('trust proxy', 1);
+
 app.use(express.json());
 
 const limiter = rateLimit({
@@ -34,28 +36,12 @@ if (!fs.existsSync(sessionsDir)) {
     });
 }
 
-const publicDir = path.join(
-    process.cwd(),
-    'public'
-);
-
-if (!fs.existsSync(publicDir)) {
-    fs.mkdirSync(publicDir, {
-        recursive: true
-    });
-}
-
-app.use(
-    express.static(publicDir)
-);
-
 function authenticate(req, res, next) {
     if (!config.apiKey) {
         return next();
     }
 
-    const key =
-        req.headers['x-api-key'];
+    const key = req.headers['x-api-key'];
 
     if (key !== config.apiKey) {
         return res.status(401).json({
@@ -67,59 +53,11 @@ function authenticate(req, res, next) {
 }
 
 app.get('/', (req, res) => {
-    const indexPath = path.join(
-        publicDir,
-        'index.html'
-    );
-
-    const pairPath = path.join(
-        publicDir,
-        'pair.html'
-    );
-
-    if (fs.existsSync(indexPath)) {
-        return res.sendFile(indexPath);
-    }
-
-    if (fs.existsSync(pairPath)) {
-        return res.sendFile(pairPath);
-    }
-
     res.json({
         name: 'ADM Link Hub',
         version: '1.0.0',
         status: 'online'
     });
-});
-
-app.get('/pair', (req, res) => {
-    const pairPath = path.join(
-        publicDir,
-        'pair.html'
-    );
-
-    if (!fs.existsSync(pairPath)) {
-        return res.status(404).send(
-            'pair.html not found'
-        );
-    }
-
-    res.sendFile(pairPath);
-});
-
-app.get('/admin', (req, res) => {
-    const adminPath = path.join(
-        publicDir,
-        'admin.html'
-    );
-
-    if (!fs.existsSync(adminPath)) {
-        return res.status(404).send(
-            'admin.html not found'
-        );
-    }
-
-    res.sendFile(adminPath);
 });
 
 app.get('/health', (req, res) => {
@@ -149,24 +87,20 @@ app.post(
 
             if (!number) {
                 return res.status(400).json({
-                    error:
-                        'Phone number is required'
+                    error: 'Phone number is required'
                 });
             }
 
             const result =
-                await createPairing(
-                    number
-                );
+                await createPairing(number);
 
             res.json({
                 success: true,
-                number:
-                    String(number)
-                        .replace(/\D/g, ''),
-                code:
-                    result.code || null
+                number: String(number)
+                    .replace(/\D/g, ''),
+                code: result.code || null
             });
+
         } catch (error) {
             console.error(
                 'Pairing request failed:',
@@ -193,12 +127,12 @@ app.get(
 
             res.json({
                 success: true,
-                number:
-                    String(
-                        req.params.number
-                    ).replace(/\D/g, ''),
+                number: String(
+                    req.params.number
+                ).replace(/\D/g, ''),
                 code
             });
+
         } catch (error) {
             console.error(
                 'Pairing code request failed:',
@@ -210,29 +144,6 @@ app.get(
                 error: error.message
             });
         }
-    }
-);
-
-app.use(
-    (req, res) => {
-        if (req.path.startsWith('/api/')) {
-            return res.status(404).json({
-                error: 'API endpoint not found'
-            });
-        }
-
-        const indexPath = path.join(
-            publicDir,
-            'index.html'
-        );
-
-        if (fs.existsSync(indexPath)) {
-            return res.sendFile(indexPath);
-        }
-
-        res.status(404).send(
-            'Page not found'
-        );
     }
 );
 
