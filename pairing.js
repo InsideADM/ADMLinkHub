@@ -2,14 +2,16 @@ const {
     default: makeWASocket,
     useMultiFileAuthState,
     Browsers,
-    fetchLatestBaileysVersion
+    fetchLatestBaileysVersion,
+    DisconnectReason
 } = require('@whiskeysockets/baileys');
 
 const pino = require('pino');
-const path = require('path');
-const fs = require('fs');
 
-const config = require('./config');
+const {
+    ensureSessionDir,
+    normalizeNumber
+} = require('./session-store');
 
 const logger = pino({
     level: 'error'
@@ -17,17 +19,7 @@ const logger = pino({
 
 const sockets = new Map();
 const pairingCodes = new Map();
-
-function normalizeNumber(number) {
-    return String(number || '').replace(/\D/g, '');
-}
-
-function getSessionPath(number) {
-    return path.join(
-        path.resolve(process.cwd(), config.sessionDir),
-        normalizeNumber(number)
-    );
-}
+const reconnecting = new Set();
 
 async function getVersion() {
     try {
@@ -58,26 +50,29 @@ async function createPairing(number) {
 
     if (sockets.has(phoneNumber)) {
         return {
-            socket: sockets.get(phoneNumber),
-            code: pairingCodes.get(phoneNumber) || null
+            socket:
+                sockets.get(
+                    phoneNumber
+                ),
+            code:
+                pairingCodes.get(
+                    phoneNumber
+                ) || null
         };
     }
 
-    const sessionPath =
-        getSessionPath(phoneNumber);
-
-    if (!fs.existsSync(sessionPath)) {
-        fs.mkdirSync(sessionPath, {
-            recursive: true
-        });
-    }
+    const sessionDir =
+        ensureSessionDir(
+            phoneNumber
+        );
 
     const {
         state,
         saveCreds
-    } = await useMultiFileAuthState(
-        sessionPath
-    );
+    } =
+        await useMultiFileAuthState(
+            sessionDir
+        );
 
     const version =
         await getVersion();
@@ -111,15 +106,125 @@ async function createPairing(number) {
 
     socket.ev.on(
         'creds.update',
-        saveCreds
+        async () => {
+            try {
+                await saveCreds();
+            } catch (error) {
+                console.error(
+                    'Credential save error:',
+                    error.message
+                );
+            }
+        }
     );
 
-    if (!state.creds.registered) {
+    socket.ev.on(
+        'connection.update',
+        async update => {
+            const {
+                connection,
+                lastDisconnect
+            } = update;
+
+            if (
+                connection === 'open'
+            ) {
+                reconnecting.delete(
+                    phoneNumber
+                );
+
+                pairingCodes.delete(
+                    phoneNumber
+                );
+
+                console.log(
+                    `WhatsApp connected: ${phoneNumber}`
+                );
+
+                return;
+            }
+
+            if (
+                connection !== 'close'
+            ) {
+                return;
+            }
+
+            sockets.delete(
+                phoneNumber
+            );
+
+            pairingCodes.delete(
+                phoneNumber
+            );
+
+            const statusCode =
+                lastDisconnect
+                    ?.error
+                    ?.output
+                    ?.statusCode;
+
+            if (
+                statusCode ===
+                    DisconnectReason.loggedOut ||
+                statusCode === 401
+            ) {
+                reconnecting.delete(
+                    phoneNumber
+                );
+
+                console.log(
+                    `WhatsApp logged out: ${phoneNumber}`
+                );
+
+                return;
+            }
+
+            if (
+                reconnecting.has(
+                    phoneNumber
+                )
+            ) {
+                return;
+            }
+
+            reconnecting.add(
+                phoneNumber
+            );
+
+            setTimeout(
+                async () => {
+                    reconnecting.delete(
+                        phoneNumber
+                    );
+
+                    try {
+                        await createPairing(
+                            phoneNumber
+                        );
+                    } catch (
+                        error
+                    ) {
+                        console.error(
+                            'Reconnect error:',
+                            error.message
+                        );
+                    }
+                },
+                5000
+            );
+        }
+    );
+
+    if (
+        !state.creds.registered
+    ) {
         setTimeout(
             async () => {
                 try {
                     if (
-                        state.creds.registered
+                        state.creds
+                            .registered
                     ) {
                         return;
                     }
@@ -133,9 +238,15 @@ async function createPairing(number) {
                         phoneNumber,
                         code
                     );
-                } catch (error) {
+
+                    console.log(
+                        `Pairing code generated for ${phoneNumber}`
+                    );
+                } catch (
+                    error
+                ) {
                     console.error(
-                        'Pairing error:',
+                        'Pairing code error:',
                         error.message
                     );
                 }
@@ -143,35 +254,6 @@ async function createPairing(number) {
             3000
         );
     }
-
-    socket.ev.on(
-        'connection.update',
-        update => {
-            const {
-                connection
-            } = update;
-
-            if (
-                connection === 'open'
-            ) {
-                pairingCodes.delete(
-                    phoneNumber
-                );
-            }
-
-            if (
-                connection === 'close'
-            ) {
-                sockets.delete(
-                    phoneNumber
-                );
-
-                pairingCodes.delete(
-                    phoneNumber
-                );
-            }
-        }
-    );
 
     return {
         socket,
@@ -193,7 +275,9 @@ async function getPairingCode(number) {
     }
 
     let socket =
-        sockets.get(phoneNumber);
+        sockets.get(
+            phoneNumber
+        );
 
     if (!socket) {
         await createPairing(
@@ -201,7 +285,9 @@ async function getPairingCode(number) {
         );
 
         socket =
-            sockets.get(phoneNumber);
+            sockets.get(
+                phoneNumber
+            );
     }
 
     let code =
@@ -213,19 +299,26 @@ async function getPairingCode(number) {
         return code;
     }
 
-    const sessionPath =
-        getSessionPath(
-            phoneNumber
-        );
+    if (
+        !socket?.authState?.creds
+    ) {
+        const sessionDir =
+            ensureSessionDir(
+                phoneNumber
+            );
 
-    const {
-        state
-    } = await useMultiFileAuthState(
-        sessionPath
-    );
+        const {
+            state
+        } =
+            await useMultiFileAuthState(
+                sessionDir
+            );
 
-    if (state.creds.registered) {
-        return null;
+        if (
+            state.creds.registered
+        ) {
+            return null;
+        }
     }
 
     code =
@@ -253,9 +346,16 @@ function getSessions() {
     );
 }
 
+function isConnected(number) {
+    return sockets.has(
+        normalizeNumber(number)
+    );
+}
+
 module.exports = {
     createPairing,
     getPairingCode,
     getSocket,
-    getSessions
+    getSessions,
+    isConnected
 };
