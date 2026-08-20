@@ -4,10 +4,10 @@ const Database = require('better-sqlite3');
 
 const config = require('./config');
 
-const dbDirectory = path.dirname(config.dbPath);
+const dbDir = path.dirname(config.dbPath);
 
-if (!fs.existsSync(dbDirectory)) {
-    fs.mkdirSync(dbDirectory, {
+if (!fs.existsSync(dbDir)) {
+    fs.mkdirSync(dbDir, {
         recursive: true
     });
 }
@@ -26,12 +26,12 @@ db.exec(`
     )
 `);
 
-function now() {
+function timestamp() {
     return new Date().toISOString();
 }
 
 function createSession(phoneNumber) {
-    const timestamp = now();
+    const time = timestamp();
 
     db.prepare(`
         INSERT INTO sessions (
@@ -40,21 +40,23 @@ function createSession(phoneNumber) {
             created_at,
             updated_at
         )
-        VALUES (?, ?, ?, ?)
+        VALUES (?, 'disconnected', ?, ?)
         ON CONFLICT(phone_number)
         DO UPDATE SET
             updated_at = excluded.updated_at
     `).run(
         phoneNumber,
-        'disconnected',
-        timestamp,
-        timestamp
+        time,
+        time
     );
 
     return getSession(phoneNumber);
 }
 
-function updateSessionStatus(phoneNumber, status) {
+function updateSessionStatus(
+    phoneNumber,
+    status
+) {
     db.prepare(`
         UPDATE sessions
         SET
@@ -63,7 +65,7 @@ function updateSessionStatus(phoneNumber, status) {
         WHERE phone_number = ?
     `).run(
         status,
-        now(),
+        timestamp(),
         phoneNumber
     );
 
@@ -72,7 +74,12 @@ function updateSessionStatus(phoneNumber, status) {
 
 function getSession(phoneNumber) {
     return db.prepare(`
-        SELECT *
+        SELECT
+            id,
+            phone_number,
+            status,
+            created_at,
+            updated_at
         FROM sessions
         WHERE phone_number = ?
     `).get(phoneNumber) || null;
@@ -80,7 +87,12 @@ function getSession(phoneNumber) {
 
 function getAllSessions() {
     return db.prepare(`
-        SELECT *
+        SELECT
+            id,
+            phone_number,
+            status,
+            created_at,
+            updated_at
         FROM sessions
         ORDER BY id ASC
     `).all();
