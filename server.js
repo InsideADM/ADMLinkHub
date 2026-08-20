@@ -100,7 +100,6 @@ app.post(
                     .replace(/\D/g, ''),
                 code: result.code || null
             });
-
         } catch (error) {
             console.error(
                 'Pairing request failed:',
@@ -132,7 +131,6 @@ app.get(
                 ).replace(/\D/g, ''),
                 code
             });
-
         } catch (error) {
             console.error(
                 'Pairing code request failed:',
